@@ -243,7 +243,10 @@ public class KlientForm extends javax.swing.JFrame {
         for (int i = 0; i < subory.length; i++) {
             if(subory[i].isDirectory()){
                 continue;
-            }if(subory[i].getName().equals("build.xml") || subory[i].getName().equals("manifest.mf") ){
+            }if(subory[i].getName().equals("build.xml") 
+                    || subory[i].getName().equals("manifest.mf") 
+                    || subory[i].getName().equals(".gitignore") 
+                    || subory[i].getName().equals("README.md") ){
                 continue;
             }
             cbbFiles.addItem(subory[i].getName());
