@@ -1,7 +1,6 @@
 package sk.upjs.kopr.TcpDownloadManager;
 
 import java.io.File;
-import java.util.Arrays;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 
@@ -176,14 +175,12 @@ public class KlientForm extends javax.swing.JFrame {
                 
             };
             sw.execute();
-            //klient = new Klient(sourcePath, destinationPath + "\\" + sourcePath);
-            //Velmi dlha operacia, treba cez workera.
         }
     }//GEN-LAST:event_BtnDownloadActionPerformed
 
     private void cbbFilesItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbbFilesItemStateChanged
         sourcePath = (String)cbbFiles.getSelectedItem();
-        System.out.println("source path selected: " + sourcePath);
+        //System.out.println("source path selected: " + sourcePath);
     }//GEN-LAST:event_cbbFilesItemStateChanged
 
     /**
@@ -238,7 +235,7 @@ public class KlientForm extends javax.swing.JFrame {
     private void nacitajcbb() {
         File adresar = new File(".");
         File[] subory = adresar.listFiles();
-        System.out.println(Arrays.toString(subory));
+        //System.out.println(Arrays.toString(subory));
         
         for (int i = 0; i < subory.length; i++) {
             if(subory[i].isDirectory()){
