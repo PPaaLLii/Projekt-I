@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TcpFileReciever implements Callable<Boolean> {
@@ -24,7 +25,7 @@ public class TcpFileReciever implements Callable<Boolean> {
     @Override
     public Boolean call() throws Exception {
         Socket clientSocket = new Socket("localhost", 1235);
-        System.out.println(poradie + " Connecting to " + "localhost" + " on port " + 1235);
+        //System.out.println(poradie + " Connecting to " + "localhost" + " on port " + 1235);
         System.out.println(poradie + " Just connected to " + clientSocket.getRemoteSocketAddress());
         OutputStream outToServer = clientSocket.getOutputStream();
         DataOutputStream out = new DataOutputStream(outToServer);
@@ -38,15 +39,20 @@ public class TcpFileReciever implements Callable<Boolean> {
         out.writeInt(poradie);
         uspesneSokety.incrementAndGet();
 
-        Long castNaOdoslanie = castiSuborovNaOdoslanie.poll();
-        while (castNaOdoslanie.equals(Klient.POISON_PILL)) {//chrustaj z radu a posielaj serveru, nech ti to posle + cakaj na chunk 
+        Long castNaOdoslanie = castiSuborovNaOdoslanie.poll(poradie, TimeUnit.MINUTES);
+        System.out.println("spapal som: " + castNaOdoslanie);
+        while (!castNaOdoslanie.equals(Klient.POISON_PILL)) {//chrustaj z radu a posielaj serveru, nech ti to posle + cakaj na chunk 
             castiSuborovNaOdoslanie.poll();
             out.writeLong(castNaOdoslanie);
             out.writeInt(Klient.CHUNK_SIZE);
+            System.out.println("poslal som cast na odoslanie a velkost chunku");
             System.out.println(in.read());
-            castNaOdoslanie = castiSuborovNaOdoslanie.poll();
+            castNaOdoslanie = castiSuborovNaOdoslanie.poll(poradie, TimeUnit.MINUTES);
+            System.out.println("casti na odoslanie je: " + castNaOdoslanie);
         }
-
+        System.out.println("spapal som POISON PILL");
+        
+        clientSocket.close();
         return true;
     }
 }

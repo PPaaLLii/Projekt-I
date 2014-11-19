@@ -53,6 +53,7 @@ public class Klient {
             System.out.println(in.readUTF());//subor mam a posielam
             
             VelkostSuboru = in.readLong();
+            System.out.println("velkost suboru je: " + VelkostSuboru);
             
             castiSuborovNaPoslanie = new ArrayBlockingQueue(pocetSoketov);
             
@@ -64,8 +65,9 @@ public class Klient {
                 future[i] = executorService.submit(tcpFileReciever);
             }
             
-            for (long i = 0; i < VelkostSuboru; i=i+CHUNK_SIZE) {
+            for (long i = 0l; i < VelkostSuboru; i=i+CHUNK_SIZE) {
                 castiSuborovNaPoslanie.offer(i);
+                System.out.println("offerujem cast suboru");
             }
             
             for (long i = 0; i < pocetSoketov; i++){
