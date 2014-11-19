@@ -24,25 +24,8 @@ public class Server {
             serverSocket = new ServerSocket(1234);
             while (true) { // http://www.tutorialspoint.com/java/java_networking.htm
                 Socket connectionSocket = serverSocket.accept();
-                System.out.println("Just connected to " + connectionSocket.getRemoteSocketAddress());
-                DataInputStream in = new DataInputStream(connectionSocket.getInputStream());
-                System.out.println(in.readUTF());
-                File subor = new File(in.readUTF());
-                DataOutputStream out = new DataOutputStream(connectionSocket.getOutputStream());
-                out.writeUTF("subor mam a posielam");
-
-                ExecutorService executorService = Executors.newSingleThreadExecutor();
-
-                TcpFileSender tcpFileSender = new TcpFileSender();
-                Future future = executorService.submit(tcpFileSender);
-
-                out.writeLong(subor.length());
-
-                //////////////////////////////////////////////////////////////////////
-                DataOutputStream out1
-                        = new DataOutputStream(connectionSocket.getOutputStream());
-                out1.writeUTF("Thank you for connecting to "
-                        + connectionSocket.getLocalSocketAddress() + "\nGoodbye!");
+                ServerHandler sh = new ServerHandler(connectionSocket);
+                Thread t = new Thread(sh);
             }
         } catch (IOException ex) {
             System.err.println("server soket sa nepodarilo otvorit");
