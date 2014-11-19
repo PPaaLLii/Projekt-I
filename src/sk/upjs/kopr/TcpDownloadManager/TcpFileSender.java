@@ -5,12 +5,10 @@ import java.io.DataOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 
 public class TcpFileSender implements Callable<Boolean> {
 
     private int poradie;
-    private CountDownLatch countDownLatch;
 
     @Override
     public Boolean call() throws Exception {

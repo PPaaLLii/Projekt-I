@@ -7,13 +7,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class Klient {
     private final String subor;
     private final String destinationPath;
     private final int pocetSoketov;
+    private Future[] future;
+    private static AtomicInteger uspesneSokety = new AtomicInteger(0);
     
     public Klient(String subor, String destinationPath, int pocetSoketov){
         this.subor = subor;
@@ -47,15 +52,25 @@ class Klient {
             System.out.println(in.readUTF());
             
             ExecutorService executorService = Executors.newFixedThreadPool(pocetSoketov);
-            
+            future = new Future[pocetSoketov];
+            System.out.println("uspesne sokety na zaciatku " + uspesneSokety);
             for (int i = 0; i < pocetSoketov; i++) {
-                TcpFileReciever tcpFileReciever = new TcpFileReciever(i);
-                executorService.submit(tcpFileReciever);
+                TcpFileReciever tcpFileReciever = new TcpFileReciever(i, uspesneSokety);
+                future[i] = executorService.submit(tcpFileReciever);
+            }
+            for (int i = 0; i < pocetSoketov; i++) {
+                future[i].get();
             }
             
             //clientSocket.close();
         } catch (IOException ex) {
             System.err.println("klient nevie vytvorit spojenie");
+            ex.printStackTrace();
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
+        } catch (ExecutionException ex) {
+            ex.printStackTrace();
+            ex.getCause();
         } 
     }
 }

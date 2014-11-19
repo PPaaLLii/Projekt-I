@@ -6,13 +6,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TcpFileReciever implements Callable<Boolean> {
 
     private int poradie;
+    private AtomicInteger uspesneSokety;
 
-    public TcpFileReciever(int poradie) {
+    public TcpFileReciever(int poradie, AtomicInteger uspesneSokety) {
         this.poradie = poradie;
+        this.uspesneSokety = uspesneSokety;
     }
 
     @Override
@@ -29,8 +32,8 @@ public class TcpFileReciever implements Callable<Boolean> {
         DataInputStream in = new DataInputStream(inFromServer);
         
         System.out.println(in.readUTF());//nice to meet you
-        
         out.writeInt(poradie);
+        uspesneSokety.incrementAndGet();
 
         return true;
     }
