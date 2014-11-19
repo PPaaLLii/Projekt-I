@@ -13,6 +13,7 @@ public class TcpFileSender implements Callable<Boolean> {
     @Override
     public Boolean call() throws Exception {
         ServerSocket serverSocket = new ServerSocket(1235);
+        //Socket connectionSocket = serverSocket.accept();
         while (true) {
             Socket connectionSocket = serverSocket.accept();
             System.out.println("Just connected to " + connectionSocket.getRemoteSocketAddress());
@@ -25,6 +26,12 @@ public class TcpFileSender implements Callable<Boolean> {
 
             this.poradie = in.readInt();
             System.out.println("moje poradie je " + poradie);
+            
+            long zaciatok = in.readLong();//kde mam zacat posielat
+            int chunksize = in.readInt();//chunksize
+            System.out.println("zaciatok " + zaciatok);
+            System.out.println("chunksize: " + chunksize);
+            out.write("data tecu".getBytes());
         }
     }
     //return true;

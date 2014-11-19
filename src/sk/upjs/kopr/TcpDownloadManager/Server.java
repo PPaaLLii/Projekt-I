@@ -36,7 +36,7 @@ public class Server {
                 TcpFileSender tcpFileSender = new TcpFileSender();
                 Future future = executorService.submit(tcpFileSender);
 
-                out.writeUTF("napoj sa na serversoket na port 1235");
+                out.writeLong(subor.length());
 
                 //////////////////////////////////////////////////////////////////////
                 DataOutputStream out1
