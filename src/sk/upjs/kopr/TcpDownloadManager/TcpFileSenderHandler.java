@@ -1,27 +1,26 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package sk.upjs.kopr.TcpDownloadManager;
 
-
-import java.net.ServerSocket;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.net.Socket;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-public class TcpFileSender implements Callable<Boolean> {
+public class TcpFileSenderHandler implements Callable<Boolean> {
 
-//    private int poradie;
+    private Socket connectionSocket;
+    private int poradie;
+    
+    public TcpFileSenderHandler(Socket connectionSocket) {
+        this.connectionSocket = connectionSocket;
+    }
 
     @Override
     public Boolean call() throws Exception {
-        ServerSocket serverSocket = new ServerSocket(1235);
-        //Socket connectionSocket = serverSocket.accept();
-        while (true) {
-            Socket connectionSocket = serverSocket.accept();
-            TcpFileSenderHandler tfsh = new TcpFileSenderHandler(connectionSocket);
-            ExecutorService es = Executors.newSingleThreadExecutor();
-            es.submit(tfsh);
-        }
-            /*
             System.out.println("Just connected to " + connectionSocket.getRemoteSocketAddress());
             DataInputStream in = new DataInputStream(connectionSocket.getInputStream());
 
@@ -38,7 +37,10 @@ public class TcpFileSender implements Callable<Boolean> {
             System.out.println("zaciatok " + zaciatok);
             System.out.println("chunksize: " + chunksize);
             out.write("data tecu".getBytes());
-                    */
+            
+            
+            
+            connectionSocket.close();
+            return true;
     }
-    //return true;
 }
