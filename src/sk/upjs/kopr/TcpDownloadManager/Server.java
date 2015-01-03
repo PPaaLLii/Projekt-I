@@ -33,7 +33,7 @@ public class Server {
 
                 ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-                TcpFileSender tcpFileSender = new TcpFileSender();
+                TcpFileSender tcpFileSender = new TcpFileSender(subor);
                 Future future = executorService.submit(tcpFileSender);
 
                 out.writeLong(subor.length());
