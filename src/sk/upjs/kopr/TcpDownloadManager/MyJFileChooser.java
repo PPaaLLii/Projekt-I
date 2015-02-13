@@ -19,7 +19,7 @@ public class MyJFileChooser extends JPanel
         chooser = new JFileChooser();
         chooser.setCurrentDirectory(new java.io.File("D://"));
         chooser.setDialogTitle(choosertitle);
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         //
         // disable the "All files" option.
         //

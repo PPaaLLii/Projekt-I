@@ -9,34 +9,48 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Exchanger;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.SwingWorker;
 
-public class Klient {
+public class Klient implements Callable<Boolean> {
 
     private final String subor;
     private final String destinationPath;
     private final int pocetSoketov;
     private Future[] future;
-    private AtomicInteger uspesneSokety = new AtomicInteger(0);
+    protected static AtomicInteger uspesneSokety = new AtomicInteger(0);
     private ArrayBlockingQueue<Long> castiSuborovNaPoslanie;
     private long VelkostSuboru;
     private long poslednySize;
     protected static final Long POISON_PILL = -1l;
-    protected static final int CHUNK_SIZE = 1000;
+    protected static final int CHUNK_SIZE = 10000;
+    private SwingWorker sw;
+    protected static final CopyOnWriteArrayList<Long> prisli = new CopyOnWriteArrayList<>();
+    protected static AtomicLong[] percenta = new AtomicLong[1];
+    private Exchanger exchanger;
 
-    public Klient(String subor, String destinationPath, int pocetSoketov) {
+    public Klient(String subor, String destinationPath, int pocetSoketov, SwingWorker sw, Exchanger exchanger) {
         this.subor = subor;
         this.destinationPath = destinationPath;
         this.pocetSoketov = pocetSoketov;
-        spusti();
+        this.sw = sw;
+        percenta[0] = new AtomicLong(0);
+        this.exchanger = exchanger;
     }
 
-    private void spusti() {
+    public Boolean call() {
         System.out.println("klient: \t START");
 
         Socket clientSocket = null;
@@ -58,8 +72,10 @@ public class Klient {
 
             VelkostSuboru = in.readLong();
             System.out.println("velkost suboru je: " + VelkostSuboru);
-
-            castiSuborovNaPoslanie = new ArrayBlockingQueue(pocetSoketov);
+            
+            int pocetChunkov = (int)(VelkostSuboru/CHUNK_SIZE)+1;
+            
+            castiSuborovNaPoslanie = new ArrayBlockingQueue(pocetChunkov);
 
             ExecutorService executorService = Executors.newFixedThreadPool(pocetSoketov);
             future = new Future[pocetSoketov];
@@ -74,10 +90,10 @@ public class Klient {
             // vytvaranie  tcpFileReceiverov
             for (int i = 0; i < pocetSoketov; i++) {
                 TcpFileReciever tcpFileReciever = 
-                        new TcpFileReciever(i, uspesneSokety, castiSuborovNaPoslanie, destinationPath, raf, VelkostSuboru);
+                        new TcpFileReciever(i, uspesneSokety, castiSuborovNaPoslanie, destinationPath, raf, VelkostSuboru, sw);
                 future[i] = executorService.submit(tcpFileReciever);
             }
-
+            
             //delenie suboru
             long i;
             for (i = 0l; i < VelkostSuboru-CHUNK_SIZE; i = i + CHUNK_SIZE) {
@@ -92,11 +108,38 @@ public class Klient {
                 System.out.println("offerujem Poison_Pill " + j);
             }
             
+            int percenta = 0;
+            
+            //System.out.println("pocetchunkov je: " + pocetChunkov);
+            while(percenta != 100){
+                //System.err.println("pocetchunkov je: " + pocetChunkov + "; uspesnesokety: " + uspesneSokety.longValue());
+                double percentage = uspesneSokety.doubleValue()/pocetChunkov;
+                //System.out.println(percentage);
+                percenta = (int)(percentage*100);
+                try{
+                    exchanger.exchange(percenta,5000,TimeUnit.MILLISECONDS);
+                }catch(InterruptedException e){
+                    System.err.println("exchanger skoncil");
+                }
+            }
+            
             for (int j = 0; j < pocetSoketov; j++) {
                 future[j].get();
             }
             System.err.println("vsetci klienti skoncili");
-
+            
+            //System.out.println("pocet: "+prisli.size());
+            
+            //Long[] pole = new Long[prisli.size()];
+                    
+            /*for (int k=0; k < prisli.size(); k++) {
+                pole[k] = prisli.get(k);
+            }*/
+            
+            //Arrays.sort(pole);
+            
+            //System.out.println(Arrays.toString(pole));
+            
             //clientSocket.close();
         } catch (IOException ex) {
             System.err.println("klient nevie vytvorit spojenie");
@@ -106,6 +149,9 @@ public class Klient {
         } catch (ExecutionException ex) {
             ex.printStackTrace();
             ex.getCause();
+        } catch (TimeoutException ex) {
+            Logger.getLogger(Klient.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return true;
     }
 }

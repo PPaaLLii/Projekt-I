@@ -10,9 +10,9 @@ import java.util.concurrent.Callable;
 
 public class TcpFileSenderHandler implements Callable<Boolean> {
 
-    private File subor;
+    private final File subor;
     
-    private Socket connectionSocket;
+    private final Socket connectionSocket;
     private int poradie;
     
     public TcpFileSenderHandler(Socket connectionSocket, File subor) {
@@ -25,12 +25,12 @@ public class TcpFileSenderHandler implements Callable<Boolean> {
             //System.out.println("Just connected to " + connectionSocket.getRemoteSocketAddress());
             DataInputStream in = new DataInputStream(connectionSocket.getInputStream());
 
-            System.out.println(in.readUTF());//hello from...
+            //System.out.println(in.readUTF());//hello from...
 
             DataOutputStream out = new DataOutputStream(connectionSocket.getOutputStream());
-            out.writeUTF("nice to meet you ☺");
+            //out.writeUTF("nice to meet you ☺");
 
-            this.poradie = in.readInt();
+            //this.poradie = in.readInt();
             //System.out.println("moje poradie je " + poradie);
             
             
@@ -42,9 +42,13 @@ public class TcpFileSenderHandler implements Callable<Boolean> {
                 out.writeUTF("data tecu");
 
                 RandomAccessFile raf = new RandomAccessFile(subor, "r");
-                raf.seek(zaciatok);
                 byte[] data = new byte[chunksize];
-                raf.read(data);
+                
+                synchronized(this){
+                    raf.seek(zaciatok);
+                    raf.read(data);
+                }
+                
                 out.write(data);
                 out.flush();
                 //System.out.println("posielam data");

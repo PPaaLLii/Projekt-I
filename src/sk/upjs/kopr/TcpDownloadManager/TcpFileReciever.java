@@ -6,11 +6,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.Socket;
-import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.swing.SwingWorker;
 
 public class TcpFileReciever implements Callable<Boolean> {
 
@@ -20,16 +20,18 @@ public class TcpFileReciever implements Callable<Boolean> {
     private String destinationPath;
     private RandomAccessFile raf;
     private long velkostSuboru;
+    private SwingWorker sw;
 
     public TcpFileReciever(int poradie, AtomicInteger uspesneSokety, 
             ArrayBlockingQueue<Long> castiSuborovNaOdoslanie, 
-            String destinationPath, RandomAccessFile raf, long velkostSuboru) {
+            String destinationPath, RandomAccessFile raf, long velkostSuboru, SwingWorker sw) {
         this.poradie = poradie;
         this.uspesneSokety = uspesneSokety;
         this.castiSuborovNaOdoslanie = castiSuborovNaOdoslanie;
         this.destinationPath = destinationPath;
         this.raf = raf;
         this.velkostSuboru = velkostSuboru;
+        this.sw = sw;
     }
 
     @Override
@@ -40,16 +42,17 @@ public class TcpFileReciever implements Callable<Boolean> {
         OutputStream outToServer = clientSocket.getOutputStream();
         DataOutputStream out = new DataOutputStream(outToServer);
 
-        out.writeUTF("Hello from " + clientSocket.getLocalSocketAddress());
+        //out.writeUTF("Hello from " + clientSocket.getLocalSocketAddress());
 
         InputStream inFromServer = clientSocket.getInputStream();
         DataInputStream in = new DataInputStream(inFromServer);
+        
+        //in.readUTF();
+        //System.out.println(in.readUTF());//nice to meet you
+        //out.writeInt(poradie);
+        //uspesneSokety.incrementAndGet();
 
-        System.out.println(in.readUTF());//nice to meet you
-        out.writeInt(poradie);
-        uspesneSokety.incrementAndGet();
-
-        Long castNaOdoslanie = castiSuborovNaOdoslanie.poll(1000, TimeUnit.MILLISECONDS);
+        Long castNaOdoslanie = castiSuborovNaOdoslanie.poll(10000, TimeUnit.MILLISECONDS);
         System.err.println(poradie + ": spapal som: " + castNaOdoslanie);
         
         while (!castNaOdoslanie.equals(Klient.POISON_PILL)) {//chrustaj z radu a posielaj serveru, nech ti to posle + cakaj na chunk 
@@ -64,30 +67,30 @@ public class TcpFileReciever implements Callable<Boolean> {
                 out.writeInt(Klient.CHUNK_SIZE);
             }
             //System.out.println(poradie + ": poslal som cast na odoslanie a velkost chunku");
-            System.out.println(in.readUTF());//data tecu
+            in.readUTF();
+            //System.out.println(in.readUTF());//data tecu
             //castNaOdoslanie = castiSuborovNaOdoslanie.poll(1000, TimeUnit.MILLISECONDS);
             //System.out.println(poradie + ": casti na odoslanie je: " + castNaOdoslanie);
             byte[] data;            
             int velkostDatCoPrisli;
             //kontrola posledneho chunku
+            
             if(poslednyChunkSize == 0){//nie je posledny
-                data = new byte[Klient.CHUNK_SIZE];
-                velkostDatCoPrisli = in.read(data, 0, Klient.CHUNK_SIZE);
-                //System.out.println(poradie + ": velkostDatCoPrisli: " + velkostDatCoPrisli);
-                //System.out.println(poradie + ": data: " + Arrays.toString(data));
-                //System.out.println(poradie + ": idem seekovat poziciu: " + castNaOdoslanie);
-                raf.seek(castNaOdoslanie);
+                    data = new byte[Klient.CHUNK_SIZE];
+                    velkostDatCoPrisli = in.read(data, 0, Klient.CHUNK_SIZE);
             }else{//je posledny
-                data = new byte[poslednyChunkSize];
-                velkostDatCoPrisli = in.read(data, 0, poslednyChunkSize);
-                //System.out.println(poradie + ": velkostDatCoPrisli: " + velkostDatCoPrisli);
-                //System.out.println(poradie + ": data: " + Arrays.toString(data));
-                //System.out.println(poradie + ": idem seekovat poziciu: " + castNaOdoslanie);
-                raf.seek(velkostSuboru-poslednyChunkSize);
+                    data = new byte[poslednyChunkSize];
+                    velkostDatCoPrisli = in.read(data, 0, poslednyChunkSize);
+                    castNaOdoslanie = velkostSuboru-poslednyChunkSize;
             }
-            raf.write(data);
-
-            castNaOdoslanie = castiSuborovNaOdoslanie.poll(1000, TimeUnit.MILLISECONDS);
+            
+            synchronized(Klient.class){
+                raf.seek(castNaOdoslanie);
+                raf.write(data);
+            }
+            
+            Klient.uspesneSokety.incrementAndGet();
+            castNaOdoslanie = castiSuborovNaOdoslanie.poll(10000, TimeUnit.MILLISECONDS);
             //System.err.println(poradie + ": spapal som: " + castNaOdoslanie);
             
         }
