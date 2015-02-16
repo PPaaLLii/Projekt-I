@@ -208,7 +208,7 @@ public class KlientForm extends javax.swing.JFrame {
                     //System.err.println("som pred whileom");
                     while(i != 100){
                         try{
-                            i = (int)exchanger.exchange(null);
+                            i = (int)exchanger.exchange(null,5000,TimeUnit.MILLISECONDS);
                         }catch(InterruptedException e){
                             System.err.println("exchanger FAIL");
                         }

@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.swing.SwingWorker;
@@ -68,28 +69,27 @@ public class Klient implements Callable<Boolean> {
             System.out.println(in.readUTF());//subor mam a posielam
 
             VelkostSuboru = in.readLong();
-            System.out.println("velkost suboru je: " + VelkostSuboru);
+            //System.out.println("velkost suboru je: " + VelkostSuboru);
             
             int pocetChunkov = (int)(VelkostSuboru/CHUNK_SIZE)+1;
             
-            castiSuborovNaPoslanie = new ArrayBlockingQueue(pocetChunkov/1000);
+            castiSuborovNaPoslanie = new ArrayBlockingQueue(pocetChunkov);
 
             ExecutorService executorService = Executors.newFixedThreadPool(pocetSoketov);
             future = new Future[pocetSoketov];
-            System.out.println("uspesne sokety na zaciatku " + uspesneSokety);
             
             File cielovySubor = new File(destinationPath);
             cielovySubor.createNewFile();
-            System.out.println("cesta k suboru: " + destinationPath);
+            //System.out.println("cesta k suboru: " + destinationPath);
             RandomAccessFile raf = new RandomAccessFile(cielovySubor, "rw");
             raf.setLength(VelkostSuboru);
             raf.close();
-            System.err.println("klient zavrel raf");
+            //System.err.println("klient zavrel raf");
             
             // vytvaranie  tcpFileReceiverov
             for (int i = 0; i < pocetSoketov; i++) {
                 TcpFileReciever tcpFileReciever = 
-                        new TcpFileReciever(i, uspesneSokety, castiSuborovNaPoslanie, cielovySubor, VelkostSuboru, sw);
+                        new TcpFileReciever(i, uspesneSokety, castiSuborovNaPoslanie, cielovySubor, VelkostSuboru);
                 future[i] = executorService.submit(tcpFileReciever);
             }
             
@@ -116,10 +116,13 @@ public class Klient implements Callable<Boolean> {
                 //System.out.println(percentage);
                 percenta = (int)(percentage*100);
                 try{
-                    //exchanger.exchange(percenta,5000,TimeUnit.MILLISECONDS);
-                    exchanger.exchange(percenta);
+                    exchanger.exchange(percenta,5000,TimeUnit.MILLISECONDS);
+                    //exchanger.exchange(percenta);
+                    System.out.println("refresh");
                 }catch(InterruptedException e){
                     System.err.println("exchanger skoncil");
+                }catch(TimeoutException e){
+                    System.err.println("timeout!!!");
                 }
             }
             
