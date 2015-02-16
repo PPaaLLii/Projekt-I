@@ -31,19 +31,16 @@ public class Klient implements Callable<Boolean> {
     protected static AtomicInteger uspesneSokety = new AtomicInteger(0);
     private ArrayBlockingQueue<Long> castiSuborovNaPoslanie;
     private long VelkostSuboru;
-    private long poslednySize;
     protected static final Long POISON_PILL = -1l;
-    protected static final int CHUNK_SIZE = 10000;
-    private SwingWorker sw;
+    protected static final int CHUNK_SIZE = 100000;
     protected static final CopyOnWriteArrayList<Long> prisli = new CopyOnWriteArrayList<>();
     protected static AtomicLong[] percenta = new AtomicLong[1];
-    private Exchanger exchanger;
+    private final Exchanger exchanger;
 
-    public Klient(String subor, String destinationPath, int pocetSoketov, SwingWorker sw, Exchanger exchanger) {
+    public Klient(String subor, String destinationPath, int pocetSoketov, Exchanger exchanger) {
         this.subor = subor;
         this.destinationPath = destinationPath;
         this.pocetSoketov = pocetSoketov;
-        this.sw = sw;
         percenta[0] = new AtomicLong(0);
         this.exchanger = exchanger;
     }
@@ -104,7 +101,7 @@ public class Klient implements Callable<Boolean> {
 
             for (long j = 0; j < pocetSoketov; j++) {
                 castiSuborovNaPoslanie.offer(POISON_PILL,120,TimeUnit.SECONDS);
-                System.out.println("offerujem Poison_Pill " + j);
+                //System.out.println("offerujem Poison_Pill " + j);
             }
             
             int percenta = 0;
@@ -118,7 +115,7 @@ public class Klient implements Callable<Boolean> {
                 try{
                     exchanger.exchange(percenta,5000,TimeUnit.MILLISECONDS);
                     //exchanger.exchange(percenta);
-                    System.out.println("refresh");
+                    //System.out.println("refresh");
                 }catch(InterruptedException e){
                     System.err.println("exchanger skoncil");
                 }catch(TimeoutException e){

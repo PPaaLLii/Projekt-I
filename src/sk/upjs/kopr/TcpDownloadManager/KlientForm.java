@@ -201,7 +201,7 @@ public class KlientForm extends javax.swing.JFrame {
                                 
                 @Override
                 protected Void doInBackground() throws Exception {
-                    klient = new Klient(fullSourcePath, destinationPath + "\\" + sourcePath, pocetSoketov,this, exchanger);
+                    klient = new Klient(fullSourcePath, destinationPath + "\\" + sourcePath, pocetSoketov, exchanger);
                     ExecutorService es = Executors.newFixedThreadPool(1);
                     Future future = es.submit(klient);
                     int i = 0;
@@ -254,7 +254,7 @@ public class KlientForm extends javax.swing.JFrame {
                 }
         
             };
-            //swTime.execute();
+            swTime.execute();
         }
     }//GEN-LAST:event_BtnDownloadActionPerformed
 

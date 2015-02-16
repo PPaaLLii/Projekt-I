@@ -33,7 +33,7 @@ public class TcpFileSenderHandler implements Callable<Boolean> {
                 raf.seek(zaciatok);
                 raf.read(data);
                 raf.close();
-                System.err.println("close raf");
+                //System.err.println("close raf");
                 out.write(data);
                 //out.flush();
                 zaciatok = in.readLong();

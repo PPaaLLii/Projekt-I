@@ -42,27 +42,34 @@ public class TcpFileReciever implements Callable<Boolean> {
         while (!castNaOdoslanie.equals(Klient.POISON_PILL)) {
             //overenie, ci to nie je posledny chunk
             int poslednyChunkSize = (int)(castNaOdoslanie % Klient.CHUNK_SIZE);
+            
+            byte[] data;
+            
             if(poslednyChunkSize != 0){
                 System.err.println("posledny!!!");
                 out.writeLong(velkostSuboru-poslednyChunkSize);
                 out.writeInt(poslednyChunkSize);
+                
+                data = new byte[poslednyChunkSize];
+                in.read(data, 0, poslednyChunkSize);
+                castNaOdoslanie = velkostSuboru-poslednyChunkSize;
             }else{
                 out.writeLong(castNaOdoslanie);
                 out.writeInt(Klient.CHUNK_SIZE);
+                data = new byte[Klient.CHUNK_SIZE];
+                in.read(data, 0, Klient.CHUNK_SIZE);
             }
             
-            byte[] data;            
-            
-            if(poslednyChunkSize == 0){ //nie je posledny
+            /*if(poslednyChunkSize == 0){ //nie je posledny
                     data = new byte[Klient.CHUNK_SIZE];
                     in.read(data, 0, Klient.CHUNK_SIZE);
             }else{  //je posledny
                     data = new byte[poslednyChunkSize];
                     in.read(data, 0, poslednyChunkSize);
                     castNaOdoslanie = velkostSuboru-poslednyChunkSize;
-            }
+            }*/
+            
             RandomAccessFile raf = new RandomAccessFile(subor, "rw");
-            //System.err.println("tuuuuuu");
             raf.seek(castNaOdoslanie);
             raf.write(data);
             raf.close();
