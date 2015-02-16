@@ -17,11 +17,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.SwingWorker;
 
 public class Klient implements Callable<Boolean> {
@@ -75,22 +72,24 @@ public class Klient implements Callable<Boolean> {
             
             int pocetChunkov = (int)(VelkostSuboru/CHUNK_SIZE)+1;
             
-            castiSuborovNaPoslanie = new ArrayBlockingQueue(pocetChunkov);
+            castiSuborovNaPoslanie = new ArrayBlockingQueue(pocetChunkov/1000);
 
             ExecutorService executorService = Executors.newFixedThreadPool(pocetSoketov);
             future = new Future[pocetSoketov];
             System.out.println("uspesne sokety na zaciatku " + uspesneSokety);
+            
             File cielovySubor = new File(destinationPath);
             cielovySubor.createNewFile();
             System.out.println("cesta k suboru: " + destinationPath);
             RandomAccessFile raf = new RandomAccessFile(cielovySubor, "rw");
             raf.setLength(VelkostSuboru);
-
+            raf.close();
+            System.err.println("klient zavrel raf");
             
             // vytvaranie  tcpFileReceiverov
             for (int i = 0; i < pocetSoketov; i++) {
                 TcpFileReciever tcpFileReciever = 
-                        new TcpFileReciever(i, uspesneSokety, castiSuborovNaPoslanie, destinationPath, raf, VelkostSuboru, sw);
+                        new TcpFileReciever(i, uspesneSokety, castiSuborovNaPoslanie, cielovySubor, VelkostSuboru, sw);
                 future[i] = executorService.submit(tcpFileReciever);
             }
             
@@ -117,7 +116,8 @@ public class Klient implements Callable<Boolean> {
                 //System.out.println(percentage);
                 percenta = (int)(percentage*100);
                 try{
-                    exchanger.exchange(percenta,5000,TimeUnit.MILLISECONDS);
+                    //exchanger.exchange(percenta,5000,TimeUnit.MILLISECONDS);
+                    exchanger.exchange(percenta);
                 }catch(InterruptedException e){
                     System.err.println("exchanger skoncil");
                 }
@@ -149,9 +149,8 @@ public class Klient implements Callable<Boolean> {
         } catch (ExecutionException ex) {
             ex.printStackTrace();
             ex.getCause();
-        } catch (TimeoutException ex) {
-            Logger.getLogger(Klient.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        } 
+        
         return true;
     }
 }

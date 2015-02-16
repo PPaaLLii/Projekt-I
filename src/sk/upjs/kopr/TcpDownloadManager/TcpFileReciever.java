@@ -2,6 +2,7 @@ package sk.upjs.kopr.TcpDownloadManager;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
@@ -19,17 +20,17 @@ public class TcpFileReciever implements Callable<Boolean> {
     private ArrayBlockingQueue<Long> castiSuborovNaOdoslanie;
     private String destinationPath;
     private RandomAccessFile raf;
+    private File subor;
     private long velkostSuboru;
     private SwingWorker sw;
 
     public TcpFileReciever(int poradie, AtomicInteger uspesneSokety, 
             ArrayBlockingQueue<Long> castiSuborovNaOdoslanie, 
-            String destinationPath, RandomAccessFile raf, long velkostSuboru, SwingWorker sw) {
+            File subor, long velkostSuboru, SwingWorker sw) {
         this.poradie = poradie;
         this.uspesneSokety = uspesneSokety;
         this.castiSuborovNaOdoslanie = castiSuborovNaOdoslanie;
-        this.destinationPath = destinationPath;
-        this.raf = raf;
+        this.subor = subor;
         this.velkostSuboru = velkostSuboru;
         this.sw = sw;
     }
@@ -83,20 +84,23 @@ public class TcpFileReciever implements Callable<Boolean> {
                     velkostDatCoPrisli = in.read(data, 0, poslednyChunkSize);
                     castNaOdoslanie = velkostSuboru-poslednyChunkSize;
             }
+            System.err.println("tuu");
             
-            synchronized(Klient.class){
-                raf.seek(castNaOdoslanie);
-                raf.write(data);
-            }
+            RandomAccessFile raf = new RandomAccessFile(subor, "rw");
+            System.err.println("tuuuuuu");
+            raf.seek(castNaOdoslanie);
+            raf.write(data);
+            raf.close();
             
             Klient.uspesneSokety.incrementAndGet();
             castNaOdoslanie = castiSuborovNaOdoslanie.poll(10000, TimeUnit.MILLISECONDS);
+            System.err.println(".");
             //System.err.println(poradie + ": spapal som: " + castNaOdoslanie);
             
         }
         out.writeLong(Klient.POISON_PILL);
         //System.out.println("spapal som POISON PILL");
-
+        raf.close();
         clientSocket.close();
         return true;
     }

@@ -40,15 +40,14 @@ public class TcpFileSenderHandler implements Callable<Boolean> {
                 //System.out.println("zaciatok " + zaciatok);
                 //System.out.println("chunksize: " + chunksize);
                 out.writeUTF("data tecu");
-
-                RandomAccessFile raf = new RandomAccessFile(subor, "r");
+                
                 byte[] data = new byte[chunksize];
                 
-                synchronized(this){
-                    raf.seek(zaciatok);
-                    raf.read(data);
-                }
-                
+                RandomAccessFile raf = new RandomAccessFile(subor, "r");
+                raf.seek(zaciatok);
+                raf.read(data);
+                raf.close();
+                System.err.println("close raf");
                 out.write(data);
                 out.flush();
                 //System.out.println("posielam data");
