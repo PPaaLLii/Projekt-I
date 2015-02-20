@@ -24,51 +24,35 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="progressBar" alignment="1" max="32767" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="lblTimeElapsed" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="62" max="-2" attributes="0"/>
+                      <Component id="lblTime" min="-2" pref="67" max="-2" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="1" attributes="0">
+                      <Component id="btnPauseContinue" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="BtnDownload" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <Component id="lblProgress" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
-                              <EmptySpace min="14" pref="14" max="-2" attributes="0"/>
-                              <Component id="lblSelectFile" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="btnSelectDestinationFolder" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="lblSocketCount" min="-2" max="-2" attributes="0"/>
-                          </Group>
+                          <Component id="btnSelectDestinationFolder" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblSocketCount" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="btnFileToDownload" alignment="0" min="-2" pref="155" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="-2" pref="26" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="22" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="lblSelectedDestination" max="32767" attributes="0"/>
-                          <Group type="102" attributes="0">
-                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                  <Component id="cbbFiles" pref="155" max="32767" attributes="0"/>
-                                  <Component id="txtSocketCount" alignment="0" min="-2" pref="69" max="-2" attributes="0"/>
-                                  <Component id="btnFileToDownload" alignment="0" max="32767" attributes="0"/>
-                              </Group>
+                          <Component id="lblSelectedDestination" pref="155" max="32767" attributes="0"/>
+                          <Component id="lblSelectedFile" alignment="0" max="32767" attributes="0"/>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="txtSocketCount" min="-2" pref="32" max="-2" attributes="0"/>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
-                      </Group>
-                  </Group>
-                  <Group type="102" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="progressBar" alignment="1" max="32767" attributes="0"/>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="lblTimeElapsed" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="62" max="-2" attributes="0"/>
-                              <Component id="lblTime" min="-2" pref="67" max="-2" attributes="0"/>
-                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="1" attributes="0">
-                              <Component id="btnPauseContinue" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="32767" attributes="0"/>
-                              <Component id="BtnDownload" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="lblProgress" alignment="0" max="32767" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
@@ -79,13 +63,11 @@
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="cbbFiles" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblSelectFile" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnFileToDownload" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblSelectedFile" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="btnFileToDownload" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="lblSelectedDestination" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -129,21 +111,6 @@
         <Property name="text" type="java.lang.String" value="There is no file selected"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JComboBox" name="cbbFiles">
-      <Properties>
-        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-          <StringArray count="0"/>
-        </Property>
-      </Properties>
-      <Events>
-        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="cbbFilesItemStateChanged"/>
-      </Events>
-    </Component>
-    <Component class="javax.swing.JLabel" name="lblSelectFile">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Select file to download"/>
-      </Properties>
-    </Component>
     <Component class="javax.swing.JButton" name="BtnDownload">
       <Properties>
         <Property name="text" type="java.lang.String" value="Download"/>
@@ -159,7 +126,7 @@
     </Component>
     <Component class="javax.swing.JTextField" name="txtSocketCount">
       <Properties>
-        <Property name="text" type="java.lang.String" value="100"/>
+        <Property name="text" type="java.lang.String" value="8"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JProgressBar" name="progressBar">
@@ -187,6 +154,11 @@
     <Component class="javax.swing.JLabel" name="lblTime">
       <Properties>
         <Property name="text" type="java.lang.String" value="0"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblSelectedFile">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="There is no file selected"/>
       </Properties>
     </Component>
   </SubComponents>

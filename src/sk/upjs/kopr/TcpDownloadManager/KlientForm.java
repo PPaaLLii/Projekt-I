@@ -1,6 +1,5 @@
 package sk.upjs.kopr.TcpDownloadManager;
 
-import java.io.File;
 import java.util.List;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.ExecutorService;
@@ -12,14 +11,14 @@ import javax.swing.SwingWorker;
 
 public class KlientForm extends javax.swing.JFrame {
 
-    private MyJFileChooser chooser1;
-    private MyJFileChooser chooser2;
+    private final MyJFileChooser chooser1;
+    private final MyJFileChooser chooser2;
     private String destinationPath = null;
     private String fullSourcePath = null;
     private String sourcePath = null;
     private Klient klient = null;
     private int pocetSoketov;
-    private Exchanger exchanger = new Exchanger();
+    private final Exchanger exchanger = new Exchanger();
     
     public KlientForm() {
         initComponents();
@@ -29,7 +28,6 @@ public class KlientForm extends javax.swing.JFrame {
         btnFileToDownload.addActionListener(chooser2);
         progressBar.setVisible(false);
         btnPauseContinue.setVisible(false);
-        nacitajcbb();
     }
 
     /**
@@ -43,8 +41,6 @@ public class KlientForm extends javax.swing.JFrame {
 
         btnSelectDestinationFolder = new javax.swing.JButton();
         lblSelectedDestination = new javax.swing.JLabel();
-        cbbFiles = new javax.swing.JComboBox();
-        lblSelectFile = new javax.swing.JLabel();
         BtnDownload = new javax.swing.JButton();
         lblSocketCount = new javax.swing.JLabel();
         txtSocketCount = new javax.swing.JTextField();
@@ -54,6 +50,7 @@ public class KlientForm extends javax.swing.JFrame {
         btnFileToDownload = new javax.swing.JButton();
         lblTimeElapsed = new javax.swing.JLabel();
         lblTime = new javax.swing.JLabel();
+        lblSelectedFile = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -66,14 +63,6 @@ public class KlientForm extends javax.swing.JFrame {
 
         lblSelectedDestination.setText("There is no file selected");
 
-        cbbFiles.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cbbFilesItemStateChanged(evt);
-            }
-        });
-
-        lblSelectFile.setText("Select file to download");
-
         BtnDownload.setText("Download");
         BtnDownload.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -83,7 +72,7 @@ public class KlientForm extends javax.swing.JFrame {
 
         lblSocketCount.setText("Socket count");
 
-        txtSocketCount.setText("100");
+        txtSocketCount.setText("8");
 
         btnPauseContinue.setText("Pause");
 
@@ -98,46 +87,38 @@ public class KlientForm extends javax.swing.JFrame {
 
         lblTime.setText("0");
 
+        lblSelectedFile.setText("There is no file selected");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(progressBar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblTimeElapsed)
+                        .addGap(62, 62, 62)
+                        .addComponent(lblTime, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(btnPauseContinue)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(BtnDownload))
+                    .addComponent(lblProgress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(14, 14, 14)
-                                .addComponent(lblSelectFile))
-                            .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(btnSelectDestinationFolder))
-                            .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(lblSocketCount)))
-                        .addGap(26, 26, 26)
+                            .addComponent(btnSelectDestinationFolder)
+                            .addComponent(lblSocketCount)
+                            .addComponent(btnFileToDownload, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(22, 22, 22)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblSelectedDestination, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lblSelectedDestination, javax.swing.GroupLayout.DEFAULT_SIZE, 155, Short.MAX_VALUE)
+                            .addComponent(lblSelectedFile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(cbbFiles, 0, 155, Short.MAX_VALUE)
-                                    .addComponent(txtSocketCount, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(btnFileToDownload, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addGap(0, 0, Short.MAX_VALUE))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(progressBar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(lblTimeElapsed)
-                                .addGap(62, 62, 62)
-                                .addComponent(lblTime, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(btnPauseContinue)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(BtnDownload))
-                            .addComponent(lblProgress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                .addComponent(txtSocketCount, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -145,10 +126,8 @@ public class KlientForm extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cbbFiles, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblSelectFile))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnFileToDownload)
+                    .addComponent(btnFileToDownload)
+                    .addComponent(lblSelectedFile))
                 .addGap(12, 12, 12)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblSelectedDestination)
@@ -205,7 +184,6 @@ public class KlientForm extends javax.swing.JFrame {
                     ExecutorService es = Executors.newFixedThreadPool(1);
                     Future future = es.submit(klient);
                     int i = 0;
-                    //System.err.println("som pred whileom");
                     while(i != 100){
                         try{
                             i = (int)exchanger.exchange(null,5000,TimeUnit.MILLISECONDS);
@@ -213,7 +191,6 @@ public class KlientForm extends javax.swing.JFrame {
                             System.err.println("exchanger FAIL");
                         }
                         publish(i);
-                        //System.err.println(i);
                         Thread.sleep(500);
                     }
                     future.get();
@@ -227,7 +204,6 @@ public class KlientForm extends javax.swing.JFrame {
                 
                 @Override
                 protected void done() {
-                    //progressBar.setValue(100);
                     lblProgress.setText("Stahovanie dokoncene");
                 }
                 
@@ -258,15 +234,10 @@ public class KlientForm extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_BtnDownloadActionPerformed
 
-    private void cbbFilesItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbbFilesItemStateChanged
-        fullSourcePath = (String)cbbFiles.getSelectedItem();
-        //System.out.println("source path selected: " + fullSourcePath);
-    }//GEN-LAST:event_cbbFilesItemStateChanged
-
     private void btnFileToDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFileToDownloadActionPerformed
         fullSourcePath = chooser2.chooser.getSelectedFile().getAbsolutePath();
         sourcePath = chooser2.chooser.getSelectedFile().getName();
-        lblSelectFile.setText(fullSourcePath);
+        lblSelectedFile.setText(fullSourcePath);
     }//GEN-LAST:event_btnFileToDownloadActionPerformed
 
     /**
@@ -310,10 +281,9 @@ public class KlientForm extends javax.swing.JFrame {
     private javax.swing.JButton btnFileToDownload;
     private javax.swing.JButton btnPauseContinue;
     private javax.swing.JButton btnSelectDestinationFolder;
-    private javax.swing.JComboBox cbbFiles;
     private javax.swing.JLabel lblProgress;
-    private javax.swing.JLabel lblSelectFile;
     private javax.swing.JLabel lblSelectedDestination;
+    private javax.swing.JLabel lblSelectedFile;
     private javax.swing.JLabel lblSocketCount;
     private javax.swing.JLabel lblTime;
     private javax.swing.JLabel lblTimeElapsed;
@@ -321,21 +291,4 @@ public class KlientForm extends javax.swing.JFrame {
     private javax.swing.JTextField txtSocketCount;
     // End of variables declaration//GEN-END:variables
 
-    private void nacitajcbb() {
-        File adresar = new File(".");
-        File[] subory = adresar.listFiles();
-        //System.out.println(Arrays.toString(subory));
-        
-        for (int i = 0; i < subory.length; i++) {
-            if(subory[i].isDirectory()){
-                continue;
-            }if(subory[i].getName().equals("build.xml") 
-                    || subory[i].getName().equals("manifest.mf") 
-                    || subory[i].getName().equals(".gitignore") 
-                    || subory[i].getName().equals("README.md") ){
-                continue;
-            }
-            cbbFiles.addItem(subory[i].getName());
-        }
-    }
 }
