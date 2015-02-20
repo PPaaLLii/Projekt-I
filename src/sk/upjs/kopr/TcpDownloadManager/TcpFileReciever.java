@@ -7,20 +7,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.Socket;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class TcpFileReciever implements Callable<Boolean> {
 
-    //private final AtomicInteger uspesneSokety;
-    private final ArrayBlockingQueue<Long> castiSuborovNaOdoslanie;
+    private final ConcurrentLinkedDeque<Long> castiSuborovNaOdoslanie;
     private final File subor;
     private final long velkostSuboru;
 
-    public TcpFileReciever(int poradie, ArrayBlockingQueue<Long> castiSuborovNaOdoslanie, 
+    public TcpFileReciever(int poradie, ConcurrentLinkedDeque<Long> castiSuborovNaOdoslanie, 
             File subor, long velkostSuboru) {
-        //this.uspesneSokety = uspesneSokety;
         this.castiSuborovNaOdoslanie = castiSuborovNaOdoslanie;
         this.subor = subor;
         this.velkostSuboru = velkostSuboru;
@@ -34,8 +31,7 @@ public class TcpFileReciever implements Callable<Boolean> {
         InputStream inFromServer = clientSocket.getInputStream();
         DataInputStream in = new DataInputStream(inFromServer);
 
-        Long castNaOdoslanie = castiSuborovNaOdoslanie.poll(10000, TimeUnit.MILLISECONDS);
-        //System.err.println("spapal som: " + castNaOdoslanie);
+        Long castNaOdoslanie = castiSuborovNaOdoslanie.pollFirst();
         
         while (!castNaOdoslanie.equals(Klient.POISON_PILL)) {
             //overenie, ci to nie je posledny chunk
@@ -45,18 +41,25 @@ public class TcpFileReciever implements Callable<Boolean> {
             
             if(poslednyChunkSize != 0){
                 System.err.println("posledny!!!");
-                out.writeLong(velkostSuboru-poslednyChunkSize);
+                castNaOdoslanie = velkostSuboru-poslednyChunkSize;
+                out.writeLong(castNaOdoslanie);
                 out.writeInt(poslednyChunkSize);
                 out.flush();
                 data = new byte[poslednyChunkSize];
                 in.read(data, 0, poslednyChunkSize);
-                castNaOdoslanie = velkostSuboru-poslednyChunkSize;
+                
             }else{
                 out.writeLong(castNaOdoslanie);
                 out.writeInt(Klient.CHUNK_SIZE);
                 out.flush();
                 data = new byte[Klient.CHUNK_SIZE];
-                in.read(data, 0, Klient.CHUNK_SIZE);
+                int read = in.read(data, 0, Klient.CHUNK_SIZE);
+                if(read != Klient.CHUNK_SIZE){
+                    System.err.println(castNaOdoslanie + " " +read);
+                    castiSuborovNaOdoslanie.offerFirst(castNaOdoslanie);
+                    castNaOdoslanie = castiSuborovNaOdoslanie.pollFirst();
+                    continue;
+                }
             }
             
             RandomAccessFile raf = new RandomAccessFile(subor, "rw");
@@ -64,7 +67,7 @@ public class TcpFileReciever implements Callable<Boolean> {
             raf.write(data);
             raf.close();
             Klient.uspesneSokety.incrementAndGet();
-            castNaOdoslanie = castiSuborovNaOdoslanie.poll(10000, TimeUnit.MILLISECONDS);
+            castNaOdoslanie = castiSuborovNaOdoslanie.pollFirst();
         }
         out.writeLong(Klient.POISON_PILL);
         out.flush();

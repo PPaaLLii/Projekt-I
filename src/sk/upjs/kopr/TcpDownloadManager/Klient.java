@@ -8,8 +8,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.Socket;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.ExecutionException;
@@ -28,10 +29,10 @@ public class Klient implements Callable<Boolean> {
     private final int pocetSoketov;
     private Future[] future;
     protected static AtomicInteger uspesneSokety = new AtomicInteger(0);
-    private ArrayBlockingQueue<Long> castiSuborovNaPoslanie;
+    private ConcurrentLinkedDeque<Long> castiSuborovNaPoslanie;
     private long VelkostSuboru;
     protected static final Long POISON_PILL = -1l;
-    protected static final int CHUNK_SIZE = 100000;
+    protected static final int CHUNK_SIZE = 10000;
     protected static final CopyOnWriteArrayList<Long> prisli = new CopyOnWriteArrayList<>();
     protected static AtomicLong[] percenta = new AtomicLong[1];
     private final Exchanger exchanger;
@@ -69,7 +70,7 @@ public class Klient implements Callable<Boolean> {
             
             int pocetChunkov = (int)(VelkostSuboru/CHUNK_SIZE)+1;
             
-            castiSuborovNaPoslanie = new ArrayBlockingQueue(pocetChunkov);
+            castiSuborovNaPoslanie = new ConcurrentLinkedDeque();
 
             ExecutorService executorService = Executors.newFixedThreadPool(pocetSoketov);
             future = new Future[pocetSoketov];
@@ -82,26 +83,28 @@ public class Klient implements Callable<Boolean> {
             raf.close();
             //System.err.println("klient zavrel raf");
             
-            // vytvaranie  tcpFileReceiverov
-            for (int i = 0; i < pocetSoketov; i++) {
-                TcpFileReciever tcpFileReciever = 
-                        new TcpFileReciever(i, castiSuborovNaPoslanie, cielovySubor, VelkostSuboru);
-                future[i] = executorService.submit(tcpFileReciever);
-            }
-            
             //delenie suboru
             long i;
             for (i = 0l; i < VelkostSuboru-CHUNK_SIZE; i = i + CHUNK_SIZE) {
-                castiSuborovNaPoslanie.offer(i,120,TimeUnit.SECONDS);
+                castiSuborovNaPoslanie.offerLast(i);
                 //System.out.println("offerujem cast suboru " + i);
             }
             //pridanie posledneho chunku
-            castiSuborovNaPoslanie.offer(i+(VelkostSuboru % CHUNK_SIZE), 120, TimeUnit.SECONDS);
+            castiSuborovNaPoslanie.offerLast(i+(VelkostSuboru % CHUNK_SIZE));
 
             for (long j = 0; j < pocetSoketov; j++) {
-                castiSuborovNaPoslanie.offer(POISON_PILL,120,TimeUnit.SECONDS);
+                castiSuborovNaPoslanie.offerLast(POISON_PILL);
                 //System.out.println("offerujem Poison_Pill " + j);
             }
+            
+            // vytvaranie  tcpFileReceiverov
+            for (int k = 0; k < pocetSoketov; k++) {
+                TcpFileReciever tcpFileReciever = 
+                        new TcpFileReciever(k, castiSuborovNaPoslanie, cielovySubor, VelkostSuboru);
+                future[k] = executorService.submit(tcpFileReciever);
+            }
+            
+            
             
             int percenta = 0;
             
@@ -127,19 +130,6 @@ public class Klient implements Callable<Boolean> {
             }
             System.err.println("vsetci klienti skoncili");
             
-            //System.out.println("pocet: "+prisli.size());
-            
-            //Long[] pole = new Long[prisli.size()];
-                    
-            /*for (int k=0; k < prisli.size(); k++) {
-                pole[k] = prisli.get(k);
-            }*/
-            
-            //Arrays.sort(pole);
-            
-            //System.out.println(Arrays.toString(pole));
-            
-            //clientSocket.close();
         } catch (IOException ex) {
             System.err.println("klient nevie vytvorit spojenie");
             ex.printStackTrace();
