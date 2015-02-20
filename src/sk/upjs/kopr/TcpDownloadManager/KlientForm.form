@@ -50,7 +50,7 @@
                           <Component id="lblSelectedDestination" pref="155" max="32767" attributes="0"/>
                           <Component id="lblSelectedFile" alignment="0" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="txtSocketCount" min="-2" pref="32" max="-2" attributes="0"/>
+                              <Component id="txtSocketCount" min="-2" pref="36" max="-2" attributes="0"/>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
                       </Group>

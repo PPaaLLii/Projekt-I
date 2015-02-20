@@ -13,7 +13,6 @@ public class TcpFileSenderHandler implements Callable<Boolean> {
     private final File subor;
     
     private final Socket connectionSocket;
-    private int poradie;
     
     public TcpFileSenderHandler(Socket connectionSocket, File subor) {
         this.connectionSocket = connectionSocket;
@@ -33,9 +32,8 @@ public class TcpFileSenderHandler implements Callable<Boolean> {
                 raf.seek(zaciatok);
                 raf.read(data);
                 raf.close();
-                //System.err.println("close raf");
                 out.write(data);
-                //out.flush();
+                out.flush();
                 zaciatok = in.readLong();
             }
             connectionSocket.close();

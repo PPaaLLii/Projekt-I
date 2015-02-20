@@ -85,7 +85,7 @@ public class Klient implements Callable<Boolean> {
             // vytvaranie  tcpFileReceiverov
             for (int i = 0; i < pocetSoketov; i++) {
                 TcpFileReciever tcpFileReciever = 
-                        new TcpFileReciever(i, uspesneSokety, castiSuborovNaPoslanie, cielovySubor, VelkostSuboru);
+                        new TcpFileReciever(i, castiSuborovNaPoslanie, cielovySubor, VelkostSuboru);
                 future[i] = executorService.submit(tcpFileReciever);
             }
             

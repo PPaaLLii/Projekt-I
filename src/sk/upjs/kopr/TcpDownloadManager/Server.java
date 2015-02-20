@@ -48,7 +48,6 @@ public class Server {
             }
         } catch (IOException ex) {
             System.err.println("server soket sa nepodarilo otvorit");
-            ex.printStackTrace();
         } finally {
             if (serverSocket != null) {
                 try {
