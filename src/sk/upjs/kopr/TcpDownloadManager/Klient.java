@@ -10,7 +10,6 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.net.Socket;
-import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -40,6 +39,7 @@ public class Klient implements Callable<Boolean> {
     protected static AtomicLong[] percenta = new AtomicLong[1];
     private final Exchanger exchanger;
     protected static boolean[] poslat;
+    private int pocetChunkov;
 
     public Klient(String subor, String destinationPath, int pocetSoketov, Exchanger exchanger) {
         this.subor = subor;
@@ -73,7 +73,7 @@ public class Klient implements Callable<Boolean> {
             VelkostSuboru = in.readLong();
             System.out.println("velkost suboru je: " + VelkostSuboru);
             
-            int pocetChunkov = (int)(VelkostSuboru/CHUNK_SIZE)+1;
+            pocetChunkov = (int)(VelkostSuboru/CHUNK_SIZE)+1;
             System.err.println("pocet chunkov: " + pocetChunkov);
             
             castiSuborovNaPoslanie = new ConcurrentLinkedDeque();
@@ -92,7 +92,6 @@ public class Klient implements Callable<Boolean> {
             RandomAccessFile raf = new RandomAccessFile(cielovySubor, "rw");
             raf.setLength(VelkostSuboru);
             raf.close();
-            //System.err.println("klient zavrel raf");
             
             //delenie suboru
             int i;
@@ -100,9 +99,6 @@ public class Klient implements Callable<Boolean> {
                 castiSuborovNaPoslanie.offerLast((int)i);
                 //System.err.println("offerujem cast suboru " + i);
             }
-            //pridanie posledneho chunku
-            //castiSuborovNaPoslanie.offerLast(POSLEDNY);
-            //System.out.println("offerujem posledny");
 
             for (long j = 0; j < pocetSoketov; j++) {
                 castiSuborovNaPoslanie.offerLast(POISON_PILL);
@@ -118,22 +114,7 @@ public class Klient implements Callable<Boolean> {
             
             
             
-            int percenta = 0;
-            
-            //System.out.println("pocetchunkov je: " + pocetChunkov);
-            while(percenta != 100){
-                //System.err.println("pocetchunkov je: " + pocetChunkov + "; uspesnesokety: " + uspesneSokety.longValue());
-                double percentage = uspesneSokety.doubleValue()/pocetChunkov;
-                //System.out.println(percentage);
-                percenta = (int)(percentage*100);
-                try{
-                    exchanger.exchange(percenta,5000,TimeUnit.MILLISECONDS);
-                }catch(InterruptedException e){
-                    System.err.println("exchanger skoncil");
-                }catch(TimeoutException e){
-                    System.err.println("timeout!!!");
-                }
-            }
+            updatujProgressBar();
             
             for (int j = 0; j < pocetSoketov; j++) {
                 future[j].get();
@@ -155,13 +136,49 @@ public class Klient implements Callable<Boolean> {
         return true;
     }
 
+    private void updatujProgressBar() {
+        int percenta = 0;
+        
+        //System.out.println("pocetchunkov je: " + pocetChunkov);
+        while(percenta != 100){
+            double percentage = uspesneSokety.doubleValue()/pocetChunkov;
+            percenta = (int)(percentage*100);
+            try{
+                exchanger.exchange(percenta,5000,TimeUnit.MILLISECONDS);
+            }catch(InterruptedException e){
+                System.err.println("exchanger skoncil");
+            }catch(TimeoutException e){
+                System.err.println("timeout!!!");
+            }
+        }
+    }
+
     private void ZapisTrebaObnovit(boolean treba){
         PrintWriter pw = null;
         try {
-            File posli = new File("posli.txt");
-            pw = new PrintWriter(posli);
-            pw.print(treba);// netreba nacitavat
-            System.out.println("zapisane false");
+            pw = new PrintWriter("posli.txt");
+            pw.println(treba);
+            System.out.println("zapisane");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }finally{
+            pw.close();
+        }
+    }
+    
+    public void ulozStav(){
+        PrintWriter pw = null;
+        try {
+            pw = new PrintWriter("posli.txt");
+            pw.println(true);
+            pw.println(pocetSoketov);
+            for (int i = 0; i < poslat.length; i++) {
+                if(poslat[i]){
+                    pw.print(i);
+                    pw.print(" ");
+                }
+            }
+            System.out.println("stav ulozeny");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }finally{
