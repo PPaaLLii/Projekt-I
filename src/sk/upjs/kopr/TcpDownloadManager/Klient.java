@@ -22,24 +22,29 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Klient implements Callable<Boolean> {
 
+    private long VelkostSuboru;
+    private int pocetChunkov;
+    private final Exchanger exchanger;
     private final String subor;
     private final String destinationPath;
     private final int pocetSoketov;
+    private ExecutorService executorService;
     private Future[] future;
-    protected static AtomicInteger uspesneSokety = new AtomicInteger(0);
     private ConcurrentLinkedDeque<Integer> castiSuborovNaPoslanie;
-    private long VelkostSuboru;
+    private File cielovySubor;
+    
     protected static final Integer POISON_PILL = -1;
     protected static final Integer POSLEDNY = -2;
     protected static final int CHUNK_SIZE = 10000;
     protected static final CopyOnWriteArrayList<Long> prisli = new CopyOnWriteArrayList<>();
     protected static AtomicLong[] percenta = new AtomicLong[1];
-    private final Exchanger exchanger;
+    protected static AtomicInteger uspesneSokety = new AtomicInteger(0);
     protected static boolean[] poslat;
-    private int pocetChunkov;
 
     public Klient(String subor, String destinationPath, int pocetSoketov, Exchanger exchanger) {
         this.subor = subor;
@@ -49,31 +54,54 @@ public class Klient implements Callable<Boolean> {
         this.exchanger = exchanger;
     }
 
+    @Override
     public Boolean call() {
         System.out.println("klient: \t START");
 
-        Socket clientSocket = null;
-        try { //http://www.tutorialspoint.com/java/java_networking.htm
-            clientSocket = new Socket("localhost", 1234);
-            System.out.println("Connecting to " + "localhost"
-                    + " on port " + 1234);
-            System.out.println("Just connected to "
-                    + clientSocket.getRemoteSocketAddress());
-            OutputStream outToServer = clientSocket.getOutputStream();
-            DataOutputStream out
-                    = new DataOutputStream(outToServer);
+        inicializujSpojenieSoServerom();
+        
+        inicializujPremenne();
+        
+        vytvorSubor();
+        
+        rozdelSuborNaCasti();
+        
+        vytvorRecieverov();
+        
+        updatujProgressBar();
+        
+        skonciAUloz();
+        
+        return true;
+    }
 
+    /**
+     * http://www.tutorialspoint.com/java/java_networking.htm
+     */
+    private void inicializujSpojenieSoServerom() {
+        Socket clientSocket = null;
+        try {
+            clientSocket = new Socket("localhost", 1234);
+            System.out.println("Connecting to " + "localhost" + " on port " + 1234);
+            System.out.println("Just connected to " + clientSocket.getRemoteSocketAddress());
+            OutputStream outToServer = clientSocket.getOutputStream();
+            DataOutputStream out = new DataOutputStream(outToServer);
             out.writeUTF("Hello from " + clientSocket.getLocalSocketAddress());
             out.writeUTF(subor);
             out.writeInt(Klient.CHUNK_SIZE);
             InputStream inFromServer = clientSocket.getInputStream();
             DataInputStream in = new DataInputStream(inFromServer);
             System.out.println(in.readUTF());//subor mam a posielam
-
             VelkostSuboru = in.readLong();
             System.out.println("velkost suboru je: " + VelkostSuboru);
-            
-            pocetChunkov = (int)(VelkostSuboru/CHUNK_SIZE)+1;
+            clientSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private void inicializujPremenne(){
+        pocetChunkov = (int)(VelkostSuboru/CHUNK_SIZE)+1;
             System.err.println("pocet chunkov: " + pocetChunkov);
             
             castiSuborovNaPoslanie = new ConcurrentLinkedDeque();
@@ -83,59 +111,43 @@ public class Klient implements Callable<Boolean> {
                 poslat[i] = true;
             }
 
-            ExecutorService executorService = Executors.newFixedThreadPool(pocetSoketov);
+            executorService = Executors.newFixedThreadPool(pocetSoketov);
             future = new Future[pocetSoketov];
-            
-            File cielovySubor = new File(destinationPath);
+    }
+    
+    private void vytvorSubor() {
+        try {
+            cielovySubor = new File(destinationPath);
             cielovySubor.createNewFile();
-            //System.out.println("cesta k suboru: " + destinationPath);
             RandomAccessFile raf = new RandomAccessFile(cielovySubor, "rw");
             raf.setLength(VelkostSuboru);
             raf.close();
-            
-            //delenie suboru
-            int i;
-            for (i = 0; i < pocetChunkov; i = i+1) {
-                castiSuborovNaPoslanie.offerLast((int)i);
-                //System.err.println("offerujem cast suboru " + i);
-            }
-
-            for (long j = 0; j < pocetSoketov; j++) {
-                castiSuborovNaPoslanie.offerLast(POISON_PILL);
-                //System.out.println("offerujem Poison_Pill " + j);
-            }
-            
-            // vytvaranie  tcpFileReceiverov
-            for (int k = 0; k < pocetSoketov; k++) {
-                TcpFileReciever tcpFileReciever = 
-                        new TcpFileReciever(k, castiSuborovNaPoslanie, cielovySubor, VelkostSuboru);
-                future[k] = executorService.submit(tcpFileReciever);
-            }
-            
-            
-            
-            updatujProgressBar();
-            
-            for (int j = 0; j < pocetSoketov; j++) {
-                future[j].get();
-            }
-            System.err.println("vsetci klienti skoncili");
-            
-            ZapisTrebaObnovit(false);
-            
         } catch (IOException ex) {
-            System.err.println("klient nevie vytvorit spojenie");
             ex.printStackTrace();
-        } catch (InterruptedException ex) {
-            ex.printStackTrace();
-        } catch (ExecutionException ex) {
-            ex.printStackTrace();
-            ex.getCause();
-        } 
-        
-        return true;
+        }
     }
-
+    
+    private void rozdelSuborNaCasti() {
+        for (int i = 0; i < pocetChunkov; i = i+1) {
+            castiSuborovNaPoslanie.offerLast((int)i);
+            //System.err.println("offerujem cast suboru " + i);
+        }
+        
+        for (long j = 0; j < pocetSoketov; j++) {
+            castiSuborovNaPoslanie.offerLast(POISON_PILL);
+            //System.out.println("offerujem Poison_Pill " + j);
+        }
+    }
+    
+    private void vytvorRecieverov() {
+        // vytvaranie  tcpFileReceiverov
+        for (int k = 0; k < pocetSoketov; k++) {
+            TcpFileReciever tcpFileReciever =
+                    new TcpFileReciever(k, castiSuborovNaPoslanie, cielovySubor, VelkostSuboru);
+            future[k] = executorService.submit(tcpFileReciever);
+        }
+    }
+    
     private void updatujProgressBar() {
         int percenta = 0;
         
@@ -150,6 +162,21 @@ public class Klient implements Callable<Boolean> {
             }catch(TimeoutException e){
                 System.err.println("timeout!!!");
             }
+        }
+    }
+    
+    private void skonciAUloz() {
+        try {
+            for (int j = 0; j < pocetSoketov; j++) {
+                future[j].get();
+
+            }
+            System.err.println("vsetci klienti skoncili");
+            ZapisTrebaObnovit(false);
+        }catch(InterruptedException e){
+            e.printStackTrace();
+        }catch(ExecutionException e){
+            e.printStackTrace();
         }
     }
 
