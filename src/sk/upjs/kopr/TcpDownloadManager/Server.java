@@ -28,12 +28,13 @@ public class Server {
                 DataInputStream in = new DataInputStream(connectionSocket.getInputStream());
                 System.out.println(in.readUTF());
                 File subor = new File(in.readUTF());
+                int chunkSize = in.readInt();
                 DataOutputStream out = new DataOutputStream(connectionSocket.getOutputStream());
                 out.writeUTF("subor mam a posielam");
 
                 ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-                TcpFileSender tcpFileSender = new TcpFileSender(subor);
+                TcpFileSender tcpFileSender = new TcpFileSender(subor, chunkSize);
                 Future future = executorService.submit(tcpFileSender);
 
                 out.writeLong(subor.length());

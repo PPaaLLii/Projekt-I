@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.Socket;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -29,9 +28,10 @@ public class Klient implements Callable<Boolean> {
     private final int pocetSoketov;
     private Future[] future;
     protected static AtomicInteger uspesneSokety = new AtomicInteger(0);
-    private ConcurrentLinkedDeque<Long> castiSuborovNaPoslanie;
+    private ConcurrentLinkedDeque<Integer> castiSuborovNaPoslanie;
     private long VelkostSuboru;
-    protected static final Long POISON_PILL = -1l;
+    protected static final Integer POISON_PILL = -1;
+    protected static final Integer POSLEDNY = -2;
     protected static final int CHUNK_SIZE = 10000;
     protected static final CopyOnWriteArrayList<Long> prisli = new CopyOnWriteArrayList<>();
     protected static AtomicLong[] percenta = new AtomicLong[1];
@@ -61,6 +61,7 @@ public class Klient implements Callable<Boolean> {
 
             out.writeUTF("Hello from " + clientSocket.getLocalSocketAddress());
             out.writeUTF(subor);
+            out.writeInt(Klient.CHUNK_SIZE);
             InputStream inFromServer = clientSocket.getInputStream();
             DataInputStream in = new DataInputStream(inFromServer);
             System.out.println(in.readUTF());//subor mam a posielam
@@ -69,6 +70,7 @@ public class Klient implements Callable<Boolean> {
             //System.out.println("velkost suboru je: " + VelkostSuboru);
             
             int pocetChunkov = (int)(VelkostSuboru/CHUNK_SIZE)+1;
+            System.err.println("pocet chunkov: " + pocetChunkov);
             
             castiSuborovNaPoslanie = new ConcurrentLinkedDeque();
 
@@ -84,13 +86,14 @@ public class Klient implements Callable<Boolean> {
             //System.err.println("klient zavrel raf");
             
             //delenie suboru
-            long i;
-            for (i = 0l; i < VelkostSuboru-CHUNK_SIZE; i = i + CHUNK_SIZE) {
-                castiSuborovNaPoslanie.offerLast(i);
+            int i;
+            for (i = 0; i < VelkostSuboru; i = i+1) {
+                castiSuborovNaPoslanie.offerLast((int)i);
                 //System.out.println("offerujem cast suboru " + i);
             }
             //pridanie posledneho chunku
-            castiSuborovNaPoslanie.offerLast(i+(VelkostSuboru % CHUNK_SIZE));
+            //castiSuborovNaPoslanie.offerLast(POSLEDNY);
+            //System.out.println("offerujem posledny");
 
             for (long j = 0; j < pocetSoketov; j++) {
                 castiSuborovNaPoslanie.offerLast(POISON_PILL);
@@ -116,8 +119,6 @@ public class Klient implements Callable<Boolean> {
                 percenta = (int)(percentage*100);
                 try{
                     exchanger.exchange(percenta,5000,TimeUnit.MILLISECONDS);
-                    //exchanger.exchange(percenta);
-                    //System.out.println("refresh");
                 }catch(InterruptedException e){
                     System.err.println("exchanger skoncil");
                 }catch(TimeoutException e){

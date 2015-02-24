@@ -12,11 +12,11 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class TcpFileReciever implements Callable<Boolean> {
 
-    private final ConcurrentLinkedDeque<Long> castiSuborovNaOdoslanie;
+    private final ConcurrentLinkedDeque<Integer> castiSuborovNaOdoslanie;
     private final File subor;
     private final long velkostSuboru;
 
-    public TcpFileReciever(int poradie, ConcurrentLinkedDeque<Long> castiSuborovNaOdoslanie, 
+    public TcpFileReciever(int poradie, ConcurrentLinkedDeque<Integer> castiSuborovNaOdoslanie, 
             File subor, long velkostSuboru) {
         this.castiSuborovNaOdoslanie = castiSuborovNaOdoslanie;
         this.subor = subor;
@@ -31,26 +31,24 @@ public class TcpFileReciever implements Callable<Boolean> {
         InputStream inFromServer = clientSocket.getInputStream();
         DataInputStream in = new DataInputStream(inFromServer);
 
-        Long castNaOdoslanie = castiSuborovNaOdoslanie.pollFirst();
+        int castNaOdoslanie = castiSuborovNaOdoslanie.pollFirst();
         
-        while (!castNaOdoslanie.equals(Klient.POISON_PILL)) {
-            //overenie, ci to nie je posledny chunk
-            int poslednyChunkSize = (int)(castNaOdoslanie % Klient.CHUNK_SIZE);
+        while (castNaOdoslanie != (Klient.POISON_PILL)) {
             
             byte[] data;
             
-            if(poslednyChunkSize != 0){
+            /*if(castNaOdoslanie == Klient.POSLEDNY){
                 System.err.println("posledny!!!");
-                castNaOdoslanie = velkostSuboru-poslednyChunkSize;
-                out.writeLong(castNaOdoslanie);
-                out.writeInt(poslednyChunkSize);
+                castNaOdoslanie = ((int)velkostSuboru-poslednyChunkSize)/Klient.CHUNK_SIZE;
+                out.writeInt(castNaOdoslanie);
+                //out.writeInt(poslednyChunkSize);
                 out.flush();
                 data = new byte[poslednyChunkSize];
                 in.read(data, 0, poslednyChunkSize);
-                
-            }else{
-                out.writeLong(castNaOdoslanie);
-                out.writeInt(Klient.CHUNK_SIZE);
+             */
+            //}else{
+                out.writeInt(castNaOdoslanie);
+                //out.writeInt(Klient.CHUNK_SIZE);
                 out.flush();
                 data = new byte[Klient.CHUNK_SIZE];
                 int read = in.read(data, 0, Klient.CHUNK_SIZE);
@@ -59,7 +57,7 @@ public class TcpFileReciever implements Callable<Boolean> {
                     castiSuborovNaOdoslanie.offerFirst(castNaOdoslanie);
                     castNaOdoslanie = castiSuborovNaOdoslanie.pollFirst();
                     continue;
-                }
+                //}
             }
             
             RandomAccessFile raf = new RandomAccessFile(subor, "rw");

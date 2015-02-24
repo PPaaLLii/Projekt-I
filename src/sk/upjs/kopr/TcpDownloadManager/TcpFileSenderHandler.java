@@ -13,10 +13,12 @@ public class TcpFileSenderHandler implements Callable<Boolean> {
     private final File subor;
     
     private final Socket connectionSocket;
+    private final int chunkSize;
     
-    public TcpFileSenderHandler(Socket connectionSocket, File subor) {
+    public TcpFileSenderHandler(Socket connectionSocket, File subor, int chunkSize) {
         this.connectionSocket = connectionSocket;
         this.subor = subor;
+        this.chunkSize = chunkSize;
     }
 
     @Override
@@ -24,17 +26,16 @@ public class TcpFileSenderHandler implements Callable<Boolean> {
             DataInputStream in = new DataInputStream(connectionSocket.getInputStream());
             DataOutputStream out = new DataOutputStream(connectionSocket.getOutputStream());
 
-            Long zaciatok = in.readLong();//kde mam zacat posielat
+            Integer zaciatok = in.readInt();//kde mam zacat posielat
             while (!zaciatok.equals(Klient.POISON_PILL)) {
-                int chunksize = in.readInt();//chunksize
-                byte[] data = new byte[chunksize];
+                byte[] data = new byte[chunkSize];
                 RandomAccessFile raf = new RandomAccessFile(subor, "r");
-                raf.seek(zaciatok);
+                raf.seek(zaciatok*Klient.CHUNK_SIZE);
                 raf.read(data);
                 raf.close();
                 out.write(data);
                 out.flush();
-                zaciatok = in.readLong();
+                zaciatok = in.readInt();
             }
             connectionSocket.close();
             return true;

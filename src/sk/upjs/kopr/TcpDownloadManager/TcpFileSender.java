@@ -11,9 +11,11 @@ import java.util.concurrent.Executors;
 public class TcpFileSender implements Callable<Boolean> {
     
     private final File subor;
+    private final int chunkSize;
 
-    public TcpFileSender(File subor) {
+    public TcpFileSender(File subor, int chunkSize) {
         this.subor = subor;
+        this.chunkSize = chunkSize;
     }
 
     @Override
@@ -21,7 +23,7 @@ public class TcpFileSender implements Callable<Boolean> {
         ServerSocket serverSocket = new ServerSocket(1235);
         while (true) {
             Socket connectionSocket = serverSocket.accept();
-            TcpFileSenderHandler tfsh = new TcpFileSenderHandler(connectionSocket, subor);
+            TcpFileSenderHandler tfsh = new TcpFileSenderHandler(connectionSocket, subor, chunkSize);
             ExecutorService es = Executors.newSingleThreadExecutor();
             es.submit(tfsh);
         }
