@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -36,6 +37,7 @@ public class Klient implements Callable<Boolean> {
     protected static final CopyOnWriteArrayList<Long> prisli = new CopyOnWriteArrayList<>();
     protected static AtomicLong[] percenta = new AtomicLong[1];
     private final Exchanger exchanger;
+    protected static boolean[] poslat;
 
     public Klient(String subor, String destinationPath, int pocetSoketov, Exchanger exchanger) {
         this.subor = subor;
@@ -73,6 +75,11 @@ public class Klient implements Callable<Boolean> {
             System.err.println("pocet chunkov: " + pocetChunkov);
             
             castiSuborovNaPoslanie = new ConcurrentLinkedDeque();
+            
+            poslat = new boolean[pocetChunkov];
+            for (int i = 0; i < poslat.length; i++) {
+                poslat[i] = true;
+            }
 
             ExecutorService executorService = Executors.newFixedThreadPool(pocetSoketov);
             future = new Future[pocetSoketov];

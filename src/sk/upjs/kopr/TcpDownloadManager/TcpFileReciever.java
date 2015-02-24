@@ -72,6 +72,7 @@ public class TcpFileReciever implements Callable<Boolean> {
             raf.write(data);
             raf.close();
             Klient.uspesneSokety.incrementAndGet();
+            Klient.poslat[castNaOdoslanie] = false;
             castNaOdoslanie = castiSuborovNaOdoslanie.pollFirst();
         }
         out.writeLong(Klient.POISON_PILL);
