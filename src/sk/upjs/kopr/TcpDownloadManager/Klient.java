@@ -3,9 +3,11 @@ package sk.upjs.kopr.TcpDownloadManager;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.util.Arrays;
@@ -138,6 +140,8 @@ public class Klient implements Callable<Boolean> {
             }
             System.err.println("vsetci klienti skoncili");
             
+            ZapisTrebaObnovit(false);
+            
         } catch (IOException ex) {
             System.err.println("klient nevie vytvorit spojenie");
             ex.printStackTrace();
@@ -149,5 +153,19 @@ public class Klient implements Callable<Boolean> {
         } 
         
         return true;
+    }
+
+    private void ZapisTrebaObnovit(boolean treba){
+        PrintWriter pw = null;
+        try {
+            File posli = new File("posli.txt");
+            pw = new PrintWriter(posli);
+            pw.print(treba);// netreba nacitavat
+            System.out.println("zapisane false");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }finally{
+            pw.close();
+        }
     }
 }
