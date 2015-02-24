@@ -1,6 +1,9 @@
 package sk.upjs.kopr.TcpDownloadManager;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -11,24 +14,34 @@ import javax.swing.SwingWorker;
 
 public class KlientForm extends javax.swing.JFrame {
 
-    private final MyJFileChooser chooser1;
-    private final MyJFileChooser chooser2;
+    private final MyJFileChooser chooser1 = new MyJFileChooser();
+    private final MyJFileChooser chooser2 = new MyJFileChooser();
     private String destinationPath = null;
     private String fullSourcePath = null;
     private String sourcePath = null;
     private Klient klient = null;
     private int pocetSoketov;
     private final Exchanger exchanger = new Exchanger();
+    private boolean obnovit = false;
     
     public KlientForm() {
         initComponents();
-        chooser1 = new MyJFileChooser();
-        chooser2 = new MyJFileChooser();
-        btnSelectDestinationFolder.addActionListener(chooser1);
-        btnFileToDownload.addActionListener(chooser2);
+        refreshniObnovit();
+        
+        if(obnovit){
+            btnPauseContinue.setText("Continue");
+            btnDownload.setEnabled(false);
+            btnSelectDestinationFolder.setEnabled(false);
+            btnFileToDownload.setEnabled(false);
+            txtSocketCount.setEditable(false);
+            txtSocketCount.setText(String.valueOf(pocetSoketov));
+        }else{
+            btnSelectDestinationFolder.addActionListener(chooser1);
+            btnFileToDownload.addActionListener(chooser2);
+            btnPauseContinue.setVisible(false);
+            btnStop.setVisible(false);
+        }
         progressBar.setVisible(false);
-        btnPauseContinue.setVisible(false);
-        btnStop.setVisible(false);
         btnExit.setVisible(false);
     }
 
@@ -43,7 +56,7 @@ public class KlientForm extends javax.swing.JFrame {
 
         btnSelectDestinationFolder = new javax.swing.JButton();
         lblSelectedDestination = new javax.swing.JLabel();
-        BtnDownload = new javax.swing.JButton();
+        btnDownload = new javax.swing.JButton();
         lblSocketCount = new javax.swing.JLabel();
         txtSocketCount = new javax.swing.JTextField();
         progressBar = new javax.swing.JProgressBar();
@@ -67,10 +80,10 @@ public class KlientForm extends javax.swing.JFrame {
 
         lblSelectedDestination.setText("There is no file selected");
 
-        BtnDownload.setText("Download");
-        BtnDownload.addActionListener(new java.awt.event.ActionListener() {
+        btnDownload.setText("Download");
+        btnDownload.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                BtnDownloadActionPerformed(evt);
+                btnDownloadActionPerformed(evt);
             }
         });
 
@@ -132,7 +145,7 @@ public class KlientForm extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(btnExit)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(BtnDownload))
+                        .addComponent(btnDownload))
                     .addComponent(lblProgress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -173,7 +186,7 @@ public class KlientForm extends javax.swing.JFrame {
                 .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(BtnDownload)
+                    .addComponent(btnDownload)
                     .addComponent(btnPauseContinue)
                     .addComponent(btnStop)
                     .addComponent(btnExit))
@@ -188,7 +201,7 @@ public class KlientForm extends javax.swing.JFrame {
         lblSelectedDestination.setText(destinationPath);
     }//GEN-LAST:event_btnSelectDestinationFolderActionPerformed
 
-    private void BtnDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnDownloadActionPerformed
+    private void btnDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadActionPerformed
         
         if(destinationPath == null){
             JOptionPane.showMessageDialog(this, "Musite vybrat priecinok, kde sa ma stiahnut zadany subor");
@@ -199,7 +212,7 @@ public class KlientForm extends javax.swing.JFrame {
         if(fullSourcePath != null && destinationPath != null){
             btnPauseContinue.setVisible(true);
             btnStop.setVisible(true);
-            BtnDownload.setVisible(false);
+            btnDownload.setVisible(false);
             progressBar.setVisible(true);
             progressBar.setMinimum(0);
             progressBar.setMaximum(100);
@@ -211,7 +224,7 @@ public class KlientForm extends javax.swing.JFrame {
                                 
                 @Override
                 protected Void doInBackground() throws Exception {
-                    klient = new Klient(fullSourcePath, destinationPath + "\\" + sourcePath, pocetSoketov, exchanger);
+                    klient = new Klient(fullSourcePath, destinationPath + "\\" + sourcePath, pocetSoketov, exchanger, obnovit);
                     ExecutorService es = Executors.newFixedThreadPool(1);
                     Future future = es.submit(klient);
                     int i = 0;
@@ -266,7 +279,7 @@ public class KlientForm extends javax.swing.JFrame {
             };
             swTime.execute();
         }
-    }//GEN-LAST:event_BtnDownloadActionPerformed
+    }//GEN-LAST:event_btnDownloadActionPerformed
 
     private void btnFileToDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFileToDownloadActionPerformed
         fullSourcePath = chooser2.chooser.getSelectedFile().getAbsolutePath();
@@ -275,7 +288,7 @@ public class KlientForm extends javax.swing.JFrame {
     }//GEN-LAST:event_btnFileToDownloadActionPerformed
 
     private void btnPauseContinueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPauseContinueActionPerformed
-        // TODO add your handling code here:
+        
     }//GEN-LAST:event_btnPauseContinueActionPerformed
 
     private void btnExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExitActionPerformed
@@ -323,7 +336,7 @@ public class KlientForm extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton BtnDownload;
+    private javax.swing.JButton btnDownload;
     private javax.swing.JButton btnExit;
     private javax.swing.JButton btnFileToDownload;
     private javax.swing.JButton btnPauseContinue;
@@ -339,4 +352,21 @@ public class KlientForm extends javax.swing.JFrame {
     private javax.swing.JTextField txtSocketCount;
     // End of variables declaration//GEN-END:variables
 
+    private void refreshniObnovit() {
+        Scanner citac = null;
+        try{
+            citac = new Scanner(new File("posli.txt"));        
+            obnovit = citac.nextBoolean();
+            System.out.println("treba obnovit: " + obnovit);
+            if(obnovit){
+                pocetSoketov = citac.nextInt();
+                System.out.println("pocet soketov aktualizovany");
+            }
+        }catch(FileNotFoundException e){
+            e.printStackTrace();
+        }finally{
+            if(citac != null)
+                citac.close();
+        }
+    }
 }

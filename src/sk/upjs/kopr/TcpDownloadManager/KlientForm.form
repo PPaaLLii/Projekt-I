@@ -40,7 +40,7 @@
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="btnExit" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="BtnDownload" min="-2" max="-2" attributes="0"/>
+                      <Component id="btnDownload" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="lblProgress" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
@@ -93,7 +93,7 @@
               <Component id="progressBar" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="32767" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="BtnDownload" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnDownload" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnPauseContinue" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnStop" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnExit" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -117,12 +117,12 @@
         <Property name="text" type="java.lang.String" value="There is no file selected"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JButton" name="BtnDownload">
+    <Component class="javax.swing.JButton" name="btnDownload">
       <Properties>
         <Property name="text" type="java.lang.String" value="Download"/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="BtnDownloadActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnDownloadActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="lblSocketCount">

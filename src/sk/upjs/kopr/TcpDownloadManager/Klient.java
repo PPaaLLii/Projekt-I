@@ -37,6 +37,7 @@ public class Klient implements Callable<Boolean> {
     private Future[] future;
     private ConcurrentLinkedDeque<Integer> castiSuborovNaPoslanie;
     private File cielovySubor;
+    private boolean obnovit;
     
     protected static final Integer POISON_PILL = -1;
     protected static final Integer POSLEDNY = -2;
@@ -46,12 +47,13 @@ public class Klient implements Callable<Boolean> {
     protected static AtomicInteger uspesneSokety = new AtomicInteger(0);
     protected static boolean[] poslat;
 
-    public Klient(String subor, String destinationPath, int pocetSoketov, Exchanger exchanger) {
+    public Klient(String subor, String destinationPath, int pocetSoketov, Exchanger exchanger, boolean obnovit) {
         this.subor = subor;
         this.destinationPath = destinationPath;
         this.pocetSoketov = pocetSoketov;
         percenta[0] = new AtomicLong(0);
         this.exchanger = exchanger;
+        this.obnovit = obnovit;
     }
 
     @Override
