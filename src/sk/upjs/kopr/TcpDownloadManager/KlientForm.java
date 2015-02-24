@@ -75,6 +75,11 @@ public class KlientForm extends javax.swing.JFrame {
         txtSocketCount.setText("8");
 
         btnPauseContinue.setText("Pause");
+        btnPauseContinue.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnPauseContinueActionPerformed(evt);
+            }
+        });
 
         btnFileToDownload.setText("Select file to download");
         btnFileToDownload.addActionListener(new java.awt.event.ActionListener() {
@@ -239,6 +244,10 @@ public class KlientForm extends javax.swing.JFrame {
         sourcePath = chooser2.chooser.getSelectedFile().getName();
         lblSelectedFile.setText(fullSourcePath);
     }//GEN-LAST:event_btnFileToDownloadActionPerformed
+
+    private void btnPauseContinueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPauseContinueActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnPauseContinueActionPerformed
 
     /**
      * @param args the command line arguments

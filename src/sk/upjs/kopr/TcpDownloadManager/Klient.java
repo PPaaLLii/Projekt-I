@@ -67,7 +67,7 @@ public class Klient implements Callable<Boolean> {
             System.out.println(in.readUTF());//subor mam a posielam
 
             VelkostSuboru = in.readLong();
-            //System.out.println("velkost suboru je: " + VelkostSuboru);
+            System.out.println("velkost suboru je: " + VelkostSuboru);
             
             int pocetChunkov = (int)(VelkostSuboru/CHUNK_SIZE)+1;
             System.err.println("pocet chunkov: " + pocetChunkov);
@@ -87,7 +87,7 @@ public class Klient implements Callable<Boolean> {
             
             //delenie suboru
             int i;
-            for (i = 0; i < VelkostSuboru; i = i+1) {
+            for (i = 0; i < pocetChunkov; i = i+1) {
                 castiSuborovNaPoslanie.offerLast((int)i);
                 //System.out.println("offerujem cast suboru " + i);
             }

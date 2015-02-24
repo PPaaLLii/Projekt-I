@@ -32,10 +32,11 @@ public class TcpFileReciever implements Callable<Boolean> {
         DataInputStream in = new DataInputStream(inFromServer);
 
         int castNaOdoslanie = castiSuborovNaOdoslanie.pollFirst();
+        byte[] data;
+        data = new byte[Klient.CHUNK_SIZE];
         
         while (castNaOdoslanie != (Klient.POISON_PILL)) {
             
-            byte[] data;
             
             /*if(castNaOdoslanie == Klient.POSLEDNY){
                 System.err.println("posledny!!!");
@@ -50,10 +51,9 @@ public class TcpFileReciever implements Callable<Boolean> {
                 out.writeInt(castNaOdoslanie);
                 //out.writeInt(Klient.CHUNK_SIZE);
                 out.flush();
-                data = new byte[Klient.CHUNK_SIZE];
                 int read = in.read(data, 0, Klient.CHUNK_SIZE);
-                if(read != Klient.CHUNK_SIZE){
-                    System.err.println(castNaOdoslanie + " " +read);
+                if(read != Klient.CHUNK_SIZE && read != (velkostSuboru % Klient.CHUNK_SIZE)){
+                    System.err.println(castNaOdoslanie + " " + read);
                     castiSuborovNaOdoslanie.offerFirst(castNaOdoslanie);
                     castNaOdoslanie = castiSuborovNaOdoslanie.pollFirst();
                     continue;
@@ -61,7 +61,7 @@ public class TcpFileReciever implements Callable<Boolean> {
             }
             
             RandomAccessFile raf = new RandomAccessFile(subor, "rw");
-            raf.seek(castNaOdoslanie);
+            raf.seek(castNaOdoslanie*Klient.CHUNK_SIZE);
             raf.write(data);
             raf.close();
             Klient.uspesneSokety.incrementAndGet();
