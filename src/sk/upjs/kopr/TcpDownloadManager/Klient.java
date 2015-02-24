@@ -89,7 +89,7 @@ public class Klient implements Callable<Boolean> {
             int i;
             for (i = 0; i < pocetChunkov; i = i+1) {
                 castiSuborovNaPoslanie.offerLast((int)i);
-                //System.out.println("offerujem cast suboru " + i);
+                //System.err.println("offerujem cast suboru " + i);
             }
             //pridanie posledneho chunku
             //castiSuborovNaPoslanie.offerLast(POSLEDNY);

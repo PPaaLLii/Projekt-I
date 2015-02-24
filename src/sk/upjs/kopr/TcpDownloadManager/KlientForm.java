@@ -28,6 +28,8 @@ public class KlientForm extends javax.swing.JFrame {
         btnFileToDownload.addActionListener(chooser2);
         progressBar.setVisible(false);
         btnPauseContinue.setVisible(false);
+        btnStop.setVisible(false);
+        btnExit.setVisible(false);
     }
 
     /**
@@ -51,6 +53,8 @@ public class KlientForm extends javax.swing.JFrame {
         lblTimeElapsed = new javax.swing.JLabel();
         lblTime = new javax.swing.JLabel();
         lblSelectedFile = new javax.swing.JLabel();
+        btnStop = new javax.swing.JButton();
+        btnExit = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -94,6 +98,15 @@ public class KlientForm extends javax.swing.JFrame {
 
         lblSelectedFile.setText("There is no file selected");
 
+        btnStop.setText("Stop");
+
+        btnExit.setText("Exit");
+        btnExit.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnExitActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -109,7 +122,11 @@ public class KlientForm extends javax.swing.JFrame {
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(btnPauseContinue)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnStop)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnExit)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(BtnDownload))
                     .addComponent(lblProgress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
@@ -152,7 +169,9 @@ public class KlientForm extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(BtnDownload)
-                    .addComponent(btnPauseContinue))
+                    .addComponent(btnPauseContinue)
+                    .addComponent(btnStop)
+                    .addComponent(btnExit))
                 .addContainerGap())
         );
 
@@ -174,6 +193,8 @@ public class KlientForm extends javax.swing.JFrame {
         }
         if(fullSourcePath != null && destinationPath != null){
             btnPauseContinue.setVisible(true);
+            btnStop.setVisible(true);
+            BtnDownload.setVisible(false);
             progressBar.setVisible(true);
             progressBar.setMinimum(0);
             progressBar.setMaximum(100);
@@ -210,6 +231,9 @@ public class KlientForm extends javax.swing.JFrame {
                 @Override
                 protected void done() {
                     lblProgress.setText("Stahovanie dokoncene");
+                    btnStop.setVisible(false);
+                    btnPauseContinue.setVisible(false);
+                    btnExit.setVisible(true);
                 }
                 
             };
@@ -249,6 +273,10 @@ public class KlientForm extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_btnPauseContinueActionPerformed
 
+    private void btnExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExitActionPerformed
+        System.exit(0);
+    }//GEN-LAST:event_btnExitActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -287,9 +315,11 @@ public class KlientForm extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton BtnDownload;
+    private javax.swing.JButton btnExit;
     private javax.swing.JButton btnFileToDownload;
     private javax.swing.JButton btnPauseContinue;
     private javax.swing.JButton btnSelectDestinationFolder;
+    private javax.swing.JButton btnStop;
     private javax.swing.JLabel lblProgress;
     private javax.swing.JLabel lblSelectedDestination;
     private javax.swing.JLabel lblSelectedFile;

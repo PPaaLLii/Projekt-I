@@ -35,7 +35,11 @@
                   </Group>
                   <Group type="102" alignment="1" attributes="0">
                       <Component id="btnPauseContinue" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="btnStop" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
+                      <Component id="btnExit" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="BtnDownload" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="lblProgress" alignment="0" max="32767" attributes="0"/>
@@ -91,6 +95,8 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="BtnDownload" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnPauseContinue" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnStop" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnExit" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -163,6 +169,19 @@
       <Properties>
         <Property name="text" type="java.lang.String" value="There is no file selected"/>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="btnStop">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Stop"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="btnExit">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Exit"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnExitActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

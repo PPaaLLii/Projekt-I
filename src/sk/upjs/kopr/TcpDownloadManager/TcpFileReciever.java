@@ -1,5 +1,6 @@
 package sk.upjs.kopr.TcpDownloadManager;
 
+import java.util.Arrays;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -52,16 +53,22 @@ public class TcpFileReciever implements Callable<Boolean> {
                 //out.writeInt(Klient.CHUNK_SIZE);
                 out.flush();
                 int read = in.read(data, 0, Klient.CHUNK_SIZE);
-                if(read != Klient.CHUNK_SIZE && read != (velkostSuboru % Klient.CHUNK_SIZE)){
+                if(read != Klient.CHUNK_SIZE){
                     System.err.println(castNaOdoslanie + " " + read);
                     castiSuborovNaOdoslanie.offerFirst(castNaOdoslanie);
                     castNaOdoslanie = castiSuborovNaOdoslanie.pollFirst();
                     continue;
                 //}
             }
-            
+             
             RandomAccessFile raf = new RandomAccessFile(subor, "rw");
             raf.seek(castNaOdoslanie*Klient.CHUNK_SIZE);
+            
+            if((int)(velkostSuboru / Klient.CHUNK_SIZE) == castNaOdoslanie){
+                //zmensi posledny chunk
+                data = Arrays.copyOf(data, (int)velkostSuboru % Klient.CHUNK_SIZE);
+                System.out.println("posledny chunk!!!");
+            }
             raf.write(data);
             raf.close();
             Klient.uspesneSokety.incrementAndGet();
