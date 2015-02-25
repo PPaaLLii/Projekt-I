@@ -12,6 +12,7 @@ import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -24,8 +25,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Klient implements Callable<Map<String, String>> {
 
@@ -39,7 +38,8 @@ public class Klient implements Callable<Map<String, String>> {
     private Future[] future;
     private ConcurrentLinkedDeque<Integer> castiSuborovNaPoslanie;
     private File cielovySubor;
-    private boolean obnovit;
+    private boolean obnovit = false;
+    private Map<String, String> mapa;
     
     protected static final Integer POISON_PILL = -1;
     protected static final Integer POSLEDNY = -2;
@@ -49,22 +49,24 @@ public class Klient implements Callable<Map<String, String>> {
     protected static AtomicInteger uspesneSokety = new AtomicInteger(0);
     protected static boolean[] poslat;
 
-    public Klient(String subor, String destinationPath, int pocetSoketov, Exchanger exchanger, boolean obnovit) {
+    public Klient(String subor, String destinationPath, int pocetSoketov, Exchanger exchanger, Map<String, String> mapa) {
         this.subor = subor;
         this.destinationPath = destinationPath;
         this.pocetSoketov = pocetSoketov;
         percenta[0] = new AtomicLong(0);
         this.exchanger = exchanger;
-        this.obnovit = obnovit;
+        this.mapa = mapa;
     }
 
     @Override
     public Map<String, String> call() throws InterruptedException {
         System.out.println("klient: \t START");
-
+        
         inicializujSpojenieSoServerom();
         
         inicializujPremenne();
+        
+        nacitajStav();
         
         vytvorSubor();
         
@@ -109,8 +111,9 @@ public class Klient implements Callable<Map<String, String>> {
     }
     
     private void inicializujPremenne(){
+        System.out.println("inicializujem premenne");
         pocetChunkov = (int)(VelkostSuboru/CHUNK_SIZE)+1;
-            System.err.println("pocet chunkov: " + pocetChunkov);
+            //System.err.println("pocet chunkov: " + pocetChunkov);
             
             castiSuborovNaPoslanie = new ConcurrentLinkedDeque();
             
@@ -123,7 +126,23 @@ public class Klient implements Callable<Map<String, String>> {
             future = new Future[pocetSoketov];
     }
     
+    private void nacitajStav() {
+        System.out.println("nacitavam stav");
+        if (Boolean.valueOf(mapa.get("treba"))) {
+            obnovit = true;
+            uspesneSokety = new AtomicInteger(Integer.parseInt(mapa.get("uspesneSokety")));
+            String posli = mapa.get("posli");
+            Scanner citac = new Scanner(posli);
+            while (citac.hasNextInt()) {
+                int castNaOdoslanie = citac.nextInt();
+                castiSuborovNaPoslanie.offerFirst(castNaOdoslanie);
+                //System.out.println("offerujem" + castNaOdoslanie);
+            }
+        }
+    }
+    
     private void vytvorSubor() {
+        System.out.println("vytvaram subor");
         try {
             cielovySubor = new File(destinationPath);
             cielovySubor.createNewFile();
@@ -136,11 +155,14 @@ public class Klient implements Callable<Map<String, String>> {
     }
     
     private void rozdelSuborNaCasti() {
-        for (int i = 0; i < pocetChunkov; i = i+1) {
-            castiSuborovNaPoslanie.offerLast((int)i);
-            //System.err.println("offerujem cast suboru " + i);
+        System.out.println("rozdelujem subor na casti");
+        if (!obnovit) {
+            for (int i = 0; i < pocetChunkov; i = i + 1) {
+                castiSuborovNaPoslanie.offerLast((int) i);
+                //System.err.println("offerujem cast suboru " + i);
+            }
         }
-        
+        System.out.println("offerujem poison pill");
         for (long j = 0; j < pocetSoketov; j++) {
             castiSuborovNaPoslanie.offerLast(POISON_PILL);
             //System.out.println("offerujem Poison_Pill " + j);
@@ -149,6 +171,7 @@ public class Klient implements Callable<Map<String, String>> {
     
     private void vytvorRecieverov() {
         // vytvaranie  tcpFileReceiverov
+        System.out.println("vytvaram recieverov");
         for (int k = 0; k < pocetSoketov; k++) {
             TcpFileReciever tcpFileReciever =
                     new TcpFileReciever(k, castiSuborovNaPoslanie, cielovySubor, VelkostSuboru);
@@ -157,6 +180,7 @@ public class Klient implements Callable<Map<String, String>> {
     }
     
     private void updatujProgressBar() throws InterruptedException {
+        System.out.println("updatujem progressbar");
         int percenta = 0;
         
         //System.out.println("pocetchunkov je: " + pocetChunkov);
@@ -226,6 +250,7 @@ public class Klient implements Callable<Map<String, String>> {
         }else{
             mapa.put("prerusene", "false");
         }
+        System.out.println("klient before return");
         return mapa;
     }
 }

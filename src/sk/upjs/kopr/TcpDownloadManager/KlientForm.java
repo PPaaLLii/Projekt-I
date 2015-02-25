@@ -3,11 +3,14 @@ package sk.upjs.kopr.TcpDownloadManager;
 import java.awt.HeadlessException;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -16,7 +19,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
-import static sk.upjs.kopr.TcpDownloadManager.Klient.poslat;
 
 public class KlientForm extends javax.swing.JFrame {
 
@@ -32,6 +34,7 @@ public class KlientForm extends javax.swing.JFrame {
     private SwingWorker sw;
     private SwingWorker swTime;
     private Map<String, String> mapa;
+    private CountDownLatch countDownLatch = new CountDownLatch(1);
     
     public KlientForm() {
         initComponents();
@@ -235,7 +238,7 @@ public class KlientForm extends javax.swing.JFrame {
                 
                 @Override
                 protected Void doInBackground() throws Exception {
-                    klient = new Klient(fullSourcePath, destinationPath + "\\" + sourcePath, pocetSoketov, exchanger, obnovit);
+                    klient = new Klient(fullSourcePath, destinationPath + "\\" + sourcePath, pocetSoketov, exchanger, mapa);
                     ExecutorService es = Executors.newSingleThreadExecutor();
                     Future future = es.submit(klient);
                     int i = 0;
@@ -247,7 +250,7 @@ public class KlientForm extends javax.swing.JFrame {
                                 break;
                                 //System.out.println("do in background" + Thread.currentThread().isInterrupted());
                             }
-                            i = (int)exchanger.exchange(null,5000,TimeUnit.MILLISECONDS);
+                            i = (int)exchanger.exchange(null,100000,TimeUnit.MILLISECONDS);
                         }catch(InterruptedException e){
                             System.err.println("exchanger InterruptedException");
                         }
@@ -255,8 +258,15 @@ public class KlientForm extends javax.swing.JFrame {
                         Thread.sleep(500);
                     }
                     //System.err.println("tuuuuuuuuuuuuuuu");
+                    try{
                     mapa = (Map<String, String>)future.get();
                     System.out.println("mam mapu");
+                    countDownLatch.countDown();
+                    }catch(ExecutionException e){
+                        System.out.println("klient.get executionException");
+                    }catch(InterruptedException e){
+                        System.out.println("klient.get interrupted exception");
+                    }
                     return null;
                 }
                 
@@ -414,14 +424,70 @@ public class KlientForm extends javax.swing.JFrame {
     }
 
     private void zmazStopy() {
+        try{
+            countDownLatch.await();
+        }catch(InterruptedException e){
+            System.out.println("countdown interrupted ex");
+        }
+        System.out.println("countdownLatch");
         
+        PrintWriter pw = null;
+        try {
+            pw = new PrintWriter("posli.txt");
+            pw.println(false);
+            System.out.println("mazu sa stopy");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }finally{
+            pw.close();
+        }
+        String subor = destinationPath + "\\" + sourcePath;
+        System.out.println(subor);
+        try {
+            File file = new File(subor);
+            file.setWritable(true);
+            if (file.delete()) {
+                System.out.println("File deleted");
+            } else {
+                System.out.println("subor sa nepodarilo zmazat");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void nacitajStav() {
-        
+        Scanner citac = null;
+        try{
+            citac = new Scanner(new File("posli.txt"));        
+            obnovit = citac.nextBoolean();
+            pocetSoketov = citac.nextInt();
+            fullSourcePath = citac.next();
+            destinationPath = citac.next();
+            mapa = new HashMap<>();
+            mapa.put("uspesneSokety", citac.next());
+            StringBuilder sb = new StringBuilder("");
+            while(citac.hasNext()){
+                sb.append(citac.next());
+                sb.append(" ");
+            }
+            mapa.put("treba", "true");
+            mapa.put("posli", sb.toString());
+            System.out.println("stav nacitany");            
+        }catch(FileNotFoundException e){
+            e.printStackTrace();
+        }finally{
+            if(citac != null)
+                citac.close();
+        }
     }
 
     private void ulozStav() {
+        try{
+            countDownLatch.await();
+        }catch(InterruptedException e){
+            System.out.println("countdown interrupted ex");
+        }
         PrintWriter pw = null;
         try {
             pw = new PrintWriter("posli.txt");
@@ -429,7 +495,6 @@ public class KlientForm extends javax.swing.JFrame {
             pw.println(pocetSoketov);
             pw.println(fullSourcePath);
             pw.println(destinationPath);
-            System.err.println("TUUUUUUUUUUUUUU");
             pw.println(mapa.get("uspesneSokety"));
             pw.println(mapa.get("posli"));
             System.out.println("stav ulozeny");
