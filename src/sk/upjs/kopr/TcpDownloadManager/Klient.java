@@ -81,6 +81,8 @@ public class Klient implements Callable<Map<String, String>> {
             return mapa;
         }
         
+        skonciAUloz();
+        
         Map<String, String> mapa = prataj(false);
         return mapa;
     }
@@ -128,7 +130,6 @@ public class Klient implements Callable<Map<String, String>> {
     
     private void nacitajStav() {
         System.out.println("nacitavam stav");
-        System.out.println(mapa.toString());
         if (Boolean.valueOf(mapa.get("treba"))) {
             obnovit = true;
             uspesneSokety = new AtomicInteger(Integer.parseInt(mapa.get("uspesneSokety")));
@@ -205,6 +206,7 @@ public class Klient implements Callable<Map<String, String>> {
     }
     
     private void skonciAUloz() {
+        System.out.println("koncim");
         try {
             for (int j = 0; j < pocetSoketov; j++) {
                 future[j].get();
