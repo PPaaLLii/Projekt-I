@@ -128,6 +128,7 @@ public class Klient implements Callable<Map<String, String>> {
     
     private void nacitajStav() {
         System.out.println("nacitavam stav");
+        System.out.println(mapa.toString());
         if (Boolean.valueOf(mapa.get("treba"))) {
             obnovit = true;
             uspesneSokety = new AtomicInteger(Integer.parseInt(mapa.get("uspesneSokety")));
@@ -144,6 +145,7 @@ public class Klient implements Callable<Map<String, String>> {
     private void vytvorSubor() {
         System.out.println("vytvaram subor");
         try {
+            System.out.println(destinationPath);
             cielovySubor = new File(destinationPath);
             cielovySubor.createNewFile();
             RandomAccessFile raf = new RandomAccessFile(cielovySubor, "rw");

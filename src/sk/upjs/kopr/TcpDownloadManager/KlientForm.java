@@ -238,6 +238,10 @@ public class KlientForm extends javax.swing.JFrame {
                 
                 @Override
                 protected Void doInBackground() throws Exception {
+                    if(!obnovit){
+                        mapa = new HashMap<String, String>();
+                        mapa.put("treba", "false");
+                    }
                     klient = new Klient(fullSourcePath, destinationPath + "\\" + sourcePath, pocetSoketov, exchanger, mapa);
                     ExecutorService es = Executors.newSingleThreadExecutor();
                     Future future = es.submit(klient);
@@ -464,6 +468,7 @@ public class KlientForm extends javax.swing.JFrame {
             pocetSoketov = citac.nextInt();
             fullSourcePath = citac.next();
             destinationPath = citac.next();
+            sourcePath = citac.next();
             mapa = new HashMap<>();
             mapa.put("uspesneSokety", citac.next());
             StringBuilder sb = new StringBuilder("");
@@ -495,6 +500,7 @@ public class KlientForm extends javax.swing.JFrame {
             pw.println(pocetSoketov);
             pw.println(fullSourcePath);
             pw.println(destinationPath);
+            pw.println(sourcePath);
             pw.println(mapa.get("uspesneSokety"));
             pw.println(mapa.get("posli"));
             System.out.println("stav ulozeny");
