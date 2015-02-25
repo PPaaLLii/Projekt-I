@@ -1,16 +1,22 @@
 package sk.upjs.kopr.TcpDownloadManager;
 
+import java.awt.HeadlessException;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.Exchanger;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
+import static sk.upjs.kopr.TcpDownloadManager.Klient.poslat;
 
 public class KlientForm extends javax.swing.JFrame {
 
@@ -23,6 +29,9 @@ public class KlientForm extends javax.swing.JFrame {
     private int pocetSoketov;
     private final Exchanger exchanger = new Exchanger();
     private boolean obnovit = false;
+    private SwingWorker sw;
+    private SwingWorker swTime;
+    private Map<String, String> mapa;
     
     public KlientForm() {
         initComponents();
@@ -202,7 +211,10 @@ public class KlientForm extends javax.swing.JFrame {
     }//GEN-LAST:event_btnSelectDestinationFolderActionPerformed
 
     private void btnDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadActionPerformed
-        
+        SpustiStahovanie();
+    }//GEN-LAST:event_btnDownloadActionPerformed
+
+    private void SpustiStahovanie() throws NumberFormatException, HeadlessException {
         if(destinationPath == null){
             JOptionPane.showMessageDialog(this, "Musite vybrat priecinok, kde sa ma stiahnut zadany subor");
         }
@@ -219,28 +231,35 @@ public class KlientForm extends javax.swing.JFrame {
             progressBar.setValue(0);
             //lblProgress.setText("inicializuje sa spojenie so serverom");
             pocetSoketov = Integer.parseInt(txtSocketCount.getText());
-            SwingWorker sw;
             sw = new SwingWorker<Void, Integer>() {
-                                
+                
                 @Override
                 protected Void doInBackground() throws Exception {
                     klient = new Klient(fullSourcePath, destinationPath + "\\" + sourcePath, pocetSoketov, exchanger, obnovit);
-                    ExecutorService es = Executors.newFixedThreadPool(1);
+                    ExecutorService es = Executors.newSingleThreadExecutor();
                     Future future = es.submit(klient);
                     int i = 0;
                     while(i != 100){
                         try{
+                            if(isCancelled()){
+                                System.out.println("swDoInBackground cancelled");
+                                es.shutdownNow();
+                                break;
+                                //System.out.println("do in background" + Thread.currentThread().isInterrupted());
+                            }
                             i = (int)exchanger.exchange(null,5000,TimeUnit.MILLISECONDS);
                         }catch(InterruptedException e){
-                            System.err.println("exchanger FAIL");
+                            System.err.println("exchanger InterruptedException");
                         }
                         publish(i);
                         Thread.sleep(500);
                     }
-                    future.get();
+                    //System.err.println("tuuuuuuuuuuuuuuu");
+                    mapa = (Map<String, String>)future.get();
+                    System.out.println("mam mapu");
                     return null;
                 }
-
+                
                 @Override
                 protected void process(List<Integer> chunks) {
                     progressBar.setValue(chunks.get(chunks.size()-1));
@@ -257,9 +276,8 @@ public class KlientForm extends javax.swing.JFrame {
             };
             sw.execute();
             
-            SwingWorker swTime;
             swTime = new SwingWorker<Void, String>(){
-
+                
                 @Override
                 protected Void doInBackground() throws Exception {
                     long i = 0;
@@ -270,16 +288,29 @@ public class KlientForm extends javax.swing.JFrame {
                     }
                     //return null;
                 }
-
+                
                 @Override
                 protected void process(List<String> chunks) {
                     lblTime.setText(chunks.get(chunks.size()-1));
                 }
-        
+
+                @Override
+                protected void done() {
+                    try{
+                        get();
+                    }catch(CancellationException e){
+                        System.out.println("cancel");
+                    }catch(InterruptedException e){
+                        System.out.println("swTimeInterruptedException");
+                    }catch(ExecutionException e){
+                        System.out.println("swTimeExecutionException");
+                    }
+                }
+                
             };
             swTime.execute();
         }
-    }//GEN-LAST:event_btnDownloadActionPerformed
+    }
 
     private void btnFileToDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFileToDownloadActionPerformed
         fullSourcePath = chooser2.chooser.getSelectedFile().getAbsolutePath();
@@ -288,7 +319,13 @@ public class KlientForm extends javax.swing.JFrame {
     }//GEN-LAST:event_btnFileToDownloadActionPerformed
 
     private void btnPauseContinueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPauseContinueActionPerformed
-        
+        if(obnovit){
+            nacitajStav();
+            SpustiStahovanie();
+        }else{
+            zastavStahovanie();
+            ulozStav();
+        }
     }//GEN-LAST:event_btnPauseContinueActionPerformed
 
     private void btnExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExitActionPerformed
@@ -296,7 +333,8 @@ public class KlientForm extends javax.swing.JFrame {
     }//GEN-LAST:event_btnExitActionPerformed
 
     private void btnStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnStopActionPerformed
-        
+        zastavStahovanie();
+        zmazStopy();
     }//GEN-LAST:event_btnStopActionPerformed
 
     /**
@@ -367,6 +405,38 @@ public class KlientForm extends javax.swing.JFrame {
         }finally{
             if(citac != null)
                 citac.close();
+        }
+    }
+
+    private void zastavStahovanie() {
+        swTime.cancel(true);
+        sw.cancel(false);
+    }
+
+    private void zmazStopy() {
+        
+    }
+
+    private void nacitajStav() {
+        
+    }
+
+    private void ulozStav() {
+        PrintWriter pw = null;
+        try {
+            pw = new PrintWriter("posli.txt");
+            pw.println(true);
+            pw.println(pocetSoketov);
+            pw.println(fullSourcePath);
+            pw.println(destinationPath);
+            System.err.println("TUUUUUUUUUUUUUU");
+            pw.println(mapa.get("uspesneSokety"));
+            pw.println(mapa.get("posli"));
+            System.out.println("stav ulozeny");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            if(pw != null) pw.close();
         }
     }
 }

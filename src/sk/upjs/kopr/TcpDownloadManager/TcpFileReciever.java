@@ -73,6 +73,11 @@ public class TcpFileReciever implements Callable<Boolean> {
             raf.close();
             Klient.uspesneSokety.incrementAndGet();
             Klient.poslat[castNaOdoslanie] = false;
+            if(Thread.currentThread().isInterrupted()){
+                System.out.println("receiver interrupted");
+                clientSocket.close();
+                throw new InterruptedException();
+            }
             castNaOdoslanie = castiSuborovNaOdoslanie.pollFirst();
         }
         out.writeLong(Klient.POISON_PILL);

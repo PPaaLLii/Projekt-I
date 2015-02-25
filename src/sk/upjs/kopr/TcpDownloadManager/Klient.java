@@ -10,6 +10,8 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -25,7 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Klient implements Callable<Boolean> {
+public class Klient implements Callable<Map<String, String>> {
 
     private long VelkostSuboru;
     private int pocetChunkov;
@@ -57,7 +59,7 @@ public class Klient implements Callable<Boolean> {
     }
 
     @Override
-    public Boolean call() {
+    public Map<String, String> call() throws InterruptedException {
         System.out.println("klient: \t START");
 
         inicializujSpojenieSoServerom();
@@ -70,11 +72,15 @@ public class Klient implements Callable<Boolean> {
         
         vytvorRecieverov();
         
-        updatujProgressBar();
+        try{
+            updatujProgressBar();
+        }catch(InterruptedException e){
+            Map<String, String> mapa = prataj(true);
+            return mapa;
+        }
         
-        skonciAUloz();
-        
-        return true;
+        Map<String, String> mapa = prataj(false);
+        return mapa;
     }
 
     /**
@@ -150,17 +156,22 @@ public class Klient implements Callable<Boolean> {
         }
     }
     
-    private void updatujProgressBar() {
+    private void updatujProgressBar() throws InterruptedException {
         int percenta = 0;
         
         //System.out.println("pocetchunkov je: " + pocetChunkov);
         while(percenta != 100){
+            if(Thread.currentThread().isInterrupted()){
+                System.out.println("klient interrupted");
+                executorService.shutdownNow();
+            }
             double percentage = uspesneSokety.doubleValue()/pocetChunkov;
             percenta = (int)(percentage*100);
             try{
                 exchanger.exchange(percenta,5000,TimeUnit.MILLISECONDS);
             }catch(InterruptedException e){
                 System.err.println("exchanger skoncil");
+                throw new InterruptedException();
             }catch(TimeoutException e){
                 System.err.println("timeout!!!");
             }
@@ -195,23 +206,26 @@ public class Klient implements Callable<Boolean> {
         }
     }
     
-    public void ulozStav(){
-        PrintWriter pw = null;
-        try {
-            pw = new PrintWriter("posli.txt");
-            pw.println(true);
-            pw.println(pocetSoketov);
-            for (int i = 0; i < poslat.length; i++) {
+    private Map<String, String> prataj(boolean prerusene) {
+        System.out.println("klient ide pratat");
+        Map<String, String> mapa = new HashMap<>();
+        if(prerusene){
+            mapa.put("prerusene", "true");
+            mapa.put("uspesneSokety", String.valueOf(uspesneSokety.get()));
+            StringBuilder posli = new StringBuilder();
+            
+            for(int i = 0; i < poslat.length; i++){
                 if(poslat[i]){
-                    pw.print(i);
-                    pw.print(" ");
+                    posli.append(String.valueOf(i));
+                    posli.append(" ");
                 }
             }
-            System.out.println("stav ulozeny");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }finally{
-            pw.close();
+            
+            mapa.put("posli", posli.toString());
+            
+        }else{
+            mapa.put("prerusene", "false");
         }
+        return mapa;
     }
 }
